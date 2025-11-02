@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/database.js';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -16,9 +17,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Test route
+// Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Pattern API is running' });
+});
+
+app.use('/api/auth', authRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!'
+  });
 });
 
 // Connect to MongoDB and start server
