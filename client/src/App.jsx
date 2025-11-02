@@ -1,84 +1,28 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import Dashboard from './pages/Dashboard';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Landing from './pages/Landing';
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-darker">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
-
-// Public Route Component (redirect if already logged in)
-const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-darker">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
-};
-
-function AppRoutes() {
-  return (
-    <Routes>
-      {/* Public Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
-        }
-      />
-
-      {/* Protected Routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Default Route */}
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to="/login" />} />
-    </Routes>
-  );
-}
+// Later we can import these once you build them:
+// import Login from './pages/Login';
+// import Register from './pages/Register';
+// import Dashboard from './pages/Dashboard';
+// import Community from './pages/Community';
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <Router>
+      <div className="min-h-screen bg-darker text-white font-sans">
+        <Routes>
+          {/* Landing page with Hero animation + Math news */}
+          <Route path="/" element={<Landing />} />
+
+          {/* Future routes */}
+          {/* <Route path="/login" element={<Login />} /> */}
+          {/* <Route path="/register" element={<Register />} /> */}
+          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+          {/* <Route path="/community" element={<Community />} /> */}
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
