@@ -1,0 +1,433 @@
+/* ------------------------------ */
+/* GENERAL / CRT BACKGROUND */
+/* ------------------------------ */
+
+.landing-container {
+  width: 100%;
+  height: 100vh;
+  background: #020304;
+  overflow: hidden;
+  font-family: "Press Start 2P", monospace;
+  position: relative;
+  color: #e6e6d5;
+}
+
+/* CRT scanlines */
+.landing-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.06) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 2px
+    );
+  mix-blend-mode: soft-light;
+  opacity: 0.15;
+  z-index: 1;
+}
+
+/* CRT noise */
+.landing-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+      circle at 10% 20%,
+      rgba(255, 255, 255, 0.12) 1px,
+      transparent 0
+    ),
+    radial-gradient(circle at 80% 60%, rgba(255, 255, 255, 0.08) 1px, transparent 0),
+    radial-gradient(circle at 30% 90%, rgba(255, 255, 255, 0.1) 1px, transparent 0);
+  background-size: 140px 140px, 200px 200px, 160px 160px;
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
+  z-index: 1;
+}
+
+/* ------------------------------ */
+/* HEADER */
+/* ------------------------------ */
+
+.landing-header {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 1120px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 30;
+}
+
+.logo-text {
+  color: #8aff8a;
+  font-size: 20px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.header-btn {
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #8aff8a;
+  padding: 10px 22px;
+  font-size: 11px;
+  color: #8aff8a;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.header-btn:hover {
+  background: #8aff8a;
+  color: #000;
+  box-shadow: 0 0 10px #8aff8a, 0 0 24px rgba(138, 255, 138, 0.8);
+}
+
+/* ------------------------------ */
+/* DATA STREAMS */
+/* ------------------------------ */
+
+.data-stream-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.data-stream {
+  position: absolute;
+  color: #8aff8a;
+  text-shadow: 0 0 4px rgba(138, 255, 138, 0.7);
+  white-space: nowrap;
+  animation-name: stream-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes stream-fall {
+  from {
+    transform: translateY(-30px);
+  }
+  to {
+    transform: translateY(40px);
+  }
+}
+
+/* ------------------------------ */
+/* RADAR & SPIRAL */
+/* ------------------------------ */
+
+.radar-ring {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: 1100px;
+  height: 1100px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 80px rgba(255, 255, 255, 0.03);
+  z-index: 2;
+  opacity: 0.28;
+}
+
+.radar-sweep {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: 1100px;
+  height: 1100px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 200, 0.25),
+    transparent 55%
+  );
+  mix-blend-mode: screen;
+  filter: blur(2px);
+  animation: radar-spin 26s linear infinite;
+  z-index: 2;
+  opacity: 0.18;
+}
+
+@keyframes radar-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Fibonacci-ish spiral glow */
+
+.fib-spiral {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: 900px;
+  height: 900px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 240, 200, 0.08),
+    transparent 60%
+  );
+  mask-image: radial-gradient(circle, #000 30%, transparent 70%);
+  opacity: 0.4;
+  mix-blend-mode: screen;
+  animation: spiral-spin 55s linear infinite;
+  z-index: 4;
+}
+
+@keyframes spiral-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* ------------------------------ */
+/* GLYPH RINGS */
+/* ------------------------------ */
+
+.glyph-layer {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 7;
+}
+
+.glyph-layer-outer {
+  animation: rotateRingOuter 40s linear infinite;
+}
+
+.glyph-layer-inner {
+  animation: rotateRingInner 32s linear infinite;
+}
+
+@keyframes rotateRingOuter {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes rotateRingInner {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+
+.glyph-wrapper {
+  position: absolute;
+  transform-origin: 0 0;
+}
+
+.glyph {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  text-shadow:
+    0 0 12px rgba(255, 240, 200, 1),
+    0 0 28px rgba(255, 240, 200, 0.9),
+    0 0 42px rgba(255, 240, 200, 0.6);
+  animation:
+    glyph-flicker 2.6s infinite ease-in-out,
+    glyph-breathe 5.4s infinite ease-in-out;
+}
+
+.glyph-core {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.9),
+    transparent 70%
+  );
+  filter: blur(2px);
+  opacity: 0.45;
+  z-index: -1;
+}
+
+/* outer = warm gold, inner = green */
+
+.glyph-outer {
+  color: #fff3bf;
+}
+
+.glyph-inner {
+  color: #9cffd0;
+  text-shadow:
+    0 0 12px rgba(156, 255, 208, 1),
+    0 0 28px rgba(156, 255, 208, 0.85),
+    0 0 42px rgba(156, 255, 208, 0.5);
+}
+
+@keyframes glyph-flicker {
+  0% {
+    opacity: 0.95;
+  }
+  40% {
+    opacity: 0.6;
+  }
+  45% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.96;
+  }
+}
+
+@keyframes glyph-breathe {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ------------------------------ */
+/* HERO (CENTER CONTENT) */
+/* ------------------------------ */
+
+.landing-hero {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  transform-style: preserve-3d;
+  text-align: center;
+  z-index: 15;
+  transition: transform 0.1s linear;
+}
+
+.hero-glow {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 880px;
+  height: 880px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 240, 200, 0.28),
+    transparent 70%
+  );
+  filter: blur(40px);
+  z-index: -1;
+}
+
+.landing-title {
+  font-size: 40px;
+  color: #fff7d1;
+  margin-bottom: 18px;
+  text-shadow:
+    0 0 16px rgba(255, 240, 200, 1),
+    0 0 42px rgba(255, 240, 200, 0.75),
+    0 0 70px rgba(255, 240, 200, 0.5);
+}
+
+.landing-subtitle {
+  color: #d9d2c2;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.cta-btn {
+  padding: 14px 34px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #8aff8a;
+  color: #8aff8a;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 0 0 rgba(138, 255, 138, 0);
+}
+
+.cta-btn:hover {
+  background: #8aff8a;
+  color: #000;
+  box-shadow:
+    0 0 12px rgba(138, 255, 138, 0.9),
+    0 0 28px rgba(138, 255, 138, 0.7);
+}
+
+/* ------------------------------ */
+/* RESPONSIVE TWEAKS */
+/* ------------------------------ */
+
+@media (max-width: 900px) {
+  .landing-title {
+    font-size: 30px;
+  }
+
+  .hero-glow {
+    width: 650px;
+    height: 650px;
+  }
+
+  .glyph-layer-outer .glyph-wrapper {
+    transform: translate(280px) !important;
+  }
+
+  .glyph-layer-inner .glyph-wrapper {
+    transform: translate(210px) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .landing-header {
+    top: 16px;
+    width: 94%;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .landing-title {
+    font-size: 24px;
+  }
+
+  .landing-subtitle {
+    font-size: 10px;
+  }
+
+  .hero-glow {
+    width: 520px;
+    height: 520px;
+  }
+}

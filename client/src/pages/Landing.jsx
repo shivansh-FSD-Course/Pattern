@@ -1,47 +1,181 @@
-import Hero from '../components/landing/Hero';
-import Features from '../components/landing/Features';
-import About from '../components/landing/About';
-import MathNews from '../components/landing/MathNews';
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Landing.css";
 
-const Landing = () => {
+export default function Landing() {
+  const navigate = useNavigate();
+
+  // Glyphs for the two rings
+  const outerGlyphs = useMemo(
+    () => ["π", "φ", "∞", "Σ", "∫", "ψ", "λ", "∆", "Ω", "μ", "det", "log"],
+    []
+  );
+
+  const innerGlyphs = useMemo(
+    () => ["3", "5", "8", "13", "e", "i", "sin", "cos", "f(x)", "{ }", "∂", "√"],
+    []
+  );
+
+  // Lightweight "data stream" strings drifting behind everything
+  const dataStreams = useMemo(() => {
+    const lines = [
+      "1, 1, 2, 3, 5, 8, 13",
+      "0.1, 0.3, 0.9",
+      "sin(x), cos(x)",
+      "e^x, ln(x)",
+      "1.618, 2.618",
+      "3, 5, 8, 13, 21",
+      "O(n log n)",
+      "P(A|B)",
+      "µ, σ²",
+      "corr(x, y)",
+      "argmax θ",
+      "∫ f(t) dt",
+      "x² + y² = r²",
+      "λ₁, λ₂, …"
+    ];
+
+    return lines.map((text, index) => ({
+      id: index,
+      text,
+      left: Math.random() * 100, // vw
+      top: Math.random() * 80, // vh-ish, stays mostly in view
+      duration: 18 + Math.random() * 16,
+      delay: Math.random() * 20,
+      opacity: 0.04 + Math.random() * 0.05,
+      fontSize: 10 + Math.random() * 4
+    }));
+  }, []);
+
+  // Mouse tilt for the central hero section
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    function handleMove(e) {
+      const { innerWidth, innerHeight } = window;
+      const xNorm = (e.clientX - innerWidth / 2) / (innerWidth / 2);
+      const yNorm = (e.clientY - innerHeight / 2) / (innerHeight / 2);
+
+      // gentle tilt
+      setTilt({
+        x: yNorm * 4, // rotateX
+        y: -xNorm * 4 // rotateY
+      });
+    }
+
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
+
   return (
-    <div className="bg-darker text-white overflow-x-hidden">
-      {/* ---------- HERO SECTION ---------- */}
-      <Hero />
+    <div className="landing-container">
+      {/* HEADER */}
+      <header className="landing-header">
+        <h1 className="logo-text">PATTERNCRAFT</h1>
 
-      {/* ---------- FEATURES SECTION ---------- */}
-      <Features />
+        <div className="header-buttons">
+          <button className="header-btn" onClick={() => navigate("/login")}>
+            LOGIN
+          </button>
+          <button className="header-btn" onClick={() => navigate("/register")}>
+            REGISTER
+          </button>
+        </div>
+      </header>
 
-      {/* ---------- ABOUT SECTION ---------- */}
-      <About />
+      {/* CRT pixel noise + scanlines are done in CSS pseudo-elements */}
 
-      {/* ---------- MATH NEWS SECTION ---------- */}
-      <MathNews />
+      {/* DATA STREAMS */}
+      <div className="data-stream-layer">
+        {dataStreams.map((stream) => (
+          <span
+            key={stream.id}
+            className="data-stream"
+            style={{
+              left: `${stream.left}vw`,
+              top: `${stream.top}vh`,
+              animationDuration: `${stream.duration}s`,
+              animationDelay: `${stream.delay}s`,
+              opacity: stream.opacity,
+              fontSize: `${stream.fontSize}px`
+            }}
+          >
+            {stream.text}
+          </span>
+        ))}
+      </div>
 
-      {/* ---------- CTA FOOTER SECTION ---------- */}
-      <section className="py-24 text-center bg-gradient-to-r from-cyan-500 to-indigo-600">
-        <h2 className="text-5xl font-bold mb-6">Join the Pattern Revolution</h2>
-        <p className="text-lg text-gray-100 mb-8">
-          Upload your data. Discover patterns. Inspire others.
+      {/* RADAR + SPIRAL */}
+      <div className="radar-ring"></div>
+      <div className="radar-sweep"></div>
+      <div className="fib-spiral"></div>
+
+      {/* GLYPH RINGS */}
+      <div className="glyph-layer glyph-layer-outer">
+        {outerGlyphs.map((g, i) => (
+          <span
+            key={`outer-${i}`}
+            className="glyph-wrapper"
+            style={{
+              transform: `rotate(${i * (360 / outerGlyphs.length)}deg) translate(360px)`
+            }}
+          >
+            <span
+              className="glyph glyph-outer"
+              style={{ animationDelay: `${Math.random() * 2.2}s` }}
+            >
+              <span className="glyph-core" />
+              {g}
+            </span>
+          </span>
+        ))}
+      </div>
+
+      <div className="glyph-layer glyph-layer-inner">
+        {innerGlyphs.map((g, i) => (
+          <span
+            key={`inner-${i}`}
+            className="glyph-wrapper"
+            style={{
+              transform: `rotate(${i * (360 / innerGlyphs.length)}deg) translate(270px)`
+            }}
+          >
+            <span
+              className="glyph glyph-inner"
+              style={{ animationDelay: `${Math.random() * 2.2}s` }}
+            >
+              <span className="glyph-core" />
+              {g}
+            </span>
+          </span>
+        ))}
+      </div>
+
+      {/* MAIN HERO (tilt-reactive) */}
+      <main
+        className="landing-hero"
+        style={{
+          transform: `translate(-50%, -50%) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
+        }}
+      >
+        <div className="hero-glow" />
+
+        <h2 className="landing-title">
+          DISCOVER HIDDEN
+          <br />
+          PATTERNS
+        </h2>
+
+        <p className="landing-subtitle">
+          Upload your data and let PatternCraft uncover the
+          <br />
+          math that shapes it.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="#register"
-            className="px-8 py-4 bg-white text-dark font-semibold text-lg rounded-full hover:scale-105 transition-transform duration-300 shadow-lg"
-          >
-            Get Started Free
-          </a>
-          <a
-            href="#login"
-            className="px-8 py-4 border border-white/20 text-white font-semibold text-lg rounded-full hover:bg-white/20 transition-all duration-300"
-          >
-            Sign In
-          </a>
-        </div>
-      </section>
+        <button className="cta-btn" onClick={() => navigate("/login")}>
+          ENTER THE COMMUNITY
+        </button>
+      </main>
     </div>
   );
-};
-
-export default Landing;
+}
