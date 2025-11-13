@@ -1,62 +1,51 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./Intro.css";
+import React, { useState } from "react";
+import "./IntroGate.css";
 
-export default function IntroGate() {
-  const [doorOpen, setDoorOpen] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
-  const navigate = useNavigate();
+export default function IntroGate({ onEnter }) {
+  const [exit, setExit] = useState(false);
 
   const handleEnter = () => {
-    setDoorOpen(true);
+    setExit(true);
 
-    // Door opens first
     setTimeout(() => {
-      setFadeOut(true);
+      onEnter();
     }, 900);
-
-    // After fade-out, go to landing page
-    setTimeout(() => {
-      navigate("/home");
-    }, 1800);
   };
 
+  const symbols = ["π","φ","∑","∞","λ","μ","Δ","σ","ƒ","ψ","Ω","θ","η","τ","β"];
+
   return (
-    <div className="intro-container">
+    <div className={`gate-container ${exit ? "gate-exit" : ""}`}>
+      
+      {/* WHITE FLASH */}
+      <div className="flash-layer"></div>
 
-      {/* Warm glow */}
-      <div className="door-glow"></div>
+      {/* FLOATING FORMULAS */}
+      <div className="formula-layer">
+        {Array.from({ length: 28 }).map((_, i) => (
+          <span
+            key={i}
+            className="formula-floating"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${20 + Math.random() * 60}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${10 + Math.random() * 8}s`
+            }}
+          >
+            {symbols[i % symbols.length]}
+          </span>
+        ))}
+      </div>
 
-      {/* Embers */}
-      {Array.from({ length: 70 }).map((_, i) => (
-        <div
-          key={i}
-          className="ember"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 4}s`,
-            animationDuration: `${6 + Math.random() * 4}s`,
-            transform: `scale(${0.4 + Math.random() * 1.1})`
-          }}
-        />
-      ))}
-
-      {/* Door image */}
-      <img
-        src="/src/assets/dungeon/door.png"
-        className={`door-image ${doorOpen ? "door-open" : ""}`}
-      />
-
-      {/* Button */}
-      {!doorOpen && (
-        <button className="enter-button" onClick={handleEnter}>
-          ENTER&nbsp;DUNGEON
+      {/* CONTENT */}
+      <div className={`portal-wrapper ${exit ? "fade-out" : ""}`}>
+        <h1 className="gate-title">PATTERNCRAFT</h1>
+        <p className="gate-sub">A Portal Into Mathematical Worlds</p>
+        <button className="gate-btn" onClick={handleEnter}>
+          Enter PatternCraft
         </button>
-      )}
-
-      {/* Fade overlay */}
-      {fadeOut && <div className="fade-overlay"></div>}
+      </div>
     </div>
   );
 }

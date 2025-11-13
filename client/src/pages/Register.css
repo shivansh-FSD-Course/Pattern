@@ -1,0 +1,186 @@
+/* -------------------------------------------- */
+/* PAGE BACKGROUND */
+/* -------------------------------------------- */
+
+.reg-container {
+  width: 100%;
+  height: 100vh;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  animation: crtFlicker 0.2s infinite steps(2);
+  font-family: "Press Start 2P", monospace;
+}
+
+/* CRT scanline overlay */
+.reg-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.03) 0px,
+    rgba(255,255,255,0.03) 1px,
+    transparent 3px
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* -------------------------------------------- */
+/* FLOATING SYMBOLS */
+/* -------------------------------------------- */
+
+.reg-symbol-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.reg-symbol {
+  position: absolute;
+  font-size: 22px;
+  opacity: 0.12;
+  color: #7cff91;
+  animation: regFloat linear infinite;
+}
+
+@keyframes regFloat {
+  0% { transform: translateY(0); opacity: 0.15; }
+  100% { transform: translateY(-18vh); opacity: 0; }
+}
+
+/* -------------------------------------------- */
+/* REGISTER CARD */
+/* -------------------------------------------- */
+
+.reg-box {
+  width: 360px;
+  background: rgba(20, 20, 20, 0.7);
+  padding: 35px;
+  border: 1px solid #2aff2a;
+  box-shadow: 0 0 18px #41ff41, inset 0 0 25px #093b09;
+  z-index: 3;
+  position: relative;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(35px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reg-title {
+  color: #8aff8a;
+  text-align: center;
+  font-size: 26px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 14px #38ff38;
+}
+
+/* -------------------------------------------- */
+/* FORM STYLES */
+/* -------------------------------------------- */
+
+label {
+  font-size: 13px;
+  color: #cfcfcf;
+  display: block;
+  margin-bottom: 4px;
+}
+
+input {
+  width: 100%;
+  background: #0d0d0d;
+  border: 1px solid #3eff3e;
+  color: #c7ffc7;
+  padding: 10px;
+  font-size: 14px;
+  margin-bottom: 18px;
+  outline: none;
+  transition: 0.25s;
+}
+
+input:focus {
+  border-color: #00ff00;
+  box-shadow: 0 0 12px #1fff1f;
+}
+
+/* -------------------------------------------- */
+/* ERROR BOX */
+/* -------------------------------------------- */
+
+.reg-error {
+  background: rgba(255, 0, 0, 0.18);
+  border: 1px solid #ff3b3b;
+  color: #ff7a7a;
+  padding: 10px;
+  margin-bottom: 18px;
+  text-align: center;
+  font-size: 13px;
+  border-radius: 3px;
+  text-shadow: 0 0 6px #ff3b3b;
+}
+
+/* -------------------------------------------- */
+/* BUTTON */
+/* -------------------------------------------- */
+
+.reg-btn {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: #00ff00;
+  border: 2px solid #00ff00;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.25s;
+  text-shadow: 0 0 8px #00ff00;
+}
+
+.reg-btn:hover {
+  background: #00ff00;
+  color: #000;
+  box-shadow: 0 0 18px #00ff00;
+}
+
+.reg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------- */
+/* FOOTER */
+/* -------------------------------------------- */
+
+.reg-footer {
+  margin-top: 14px;
+  text-align: center;
+  color: #cfcfcf;
+  font-size: 13px;
+}
+
+.reg-link {
+  color: #8aff8a;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.reg-link:hover {
+  color: #baffba;
+}
+
+/* -------------------------------------------- */
+/* CRT Flicker */
+/* -------------------------------------------- */
+
+@keyframes crtFlicker {
+  0% { opacity: 1; }
+  50% { opacity: 0.97; }
+  100% { opacity: 1; }
+}

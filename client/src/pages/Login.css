@@ -1,0 +1,101 @@
+.login-container {
+  height: 100vh;
+  width: 100%;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #e6e6d5;
+  font-family: "Press Start 2P", monospace;
+  position: relative;
+  overflow: hidden;
+  animation: crt-flicker 0.2s infinite steps(2);
+}
+
+.crt-overlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    rgba(255,255,255,0.035),
+    rgba(255,255,255,0.035) 2px,
+    transparent 3px,
+    transparent 6px
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-title {
+  color: #9aff9a;
+  font-size: 26px;
+  margin-bottom: 30px;
+  text-shadow: 0 0 12px #9aff9a, 0 0 22px #57ff57;
+  z-index: 2;
+}
+
+.login-box {
+  background: rgba(20, 20, 20, 0.8);
+  border: 2px solid #8aff8a;
+  padding: 40px;
+  border-radius: 4px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 2;
+}
+
+.login-input {
+  padding: 12px;
+  background: #0a0a0a;
+  border: 2px solid #444;
+  color: #8aff8a;
+  font-size: 12px;
+  outline: none;
+  transition: 0.2s;
+  font-family: "Press Start 2P", monospace;
+}
+
+.login-input:focus {
+  border-color: #8aff8a;
+}
+
+.login-btn {
+  padding: 12px;
+  background: transparent;
+  border: 2px solid #8aff8a;
+  color: #8aff8a;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: "Press Start 2P", monospace;
+}
+
+.login-btn:hover {
+  background: #8aff8a;
+  color: #000;
+}
+
+.login-error {
+  color: #ff6b6b;
+  font-size: 12px;
+  text-align: center;
+}
+
+.login-switch {
+  font-size: 10px;
+  text-align: center;
+  color: #969696;
+}
+
+.login-switch span {
+  color: #8aff8a;
+  cursor: pointer;
+}
+
+@keyframes crt-flicker {
+  0% { opacity: 1; }
+  50% { opacity: 0.94; }
+  100% { opacity: 1; }
+}

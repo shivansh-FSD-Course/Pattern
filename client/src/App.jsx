@@ -1,25 +1,28 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import IntroGate from "./pages/IntroGate";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Community from "./pages/Community";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+function IntroWrapper() {
+  const navigate = useNavigate();
+  return <IntroGate onEnter={() => navigate("/home")} />;
+}
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/" element={<IntroGate />} />
+        <Route path="/" element={<IntroWrapper />} />
         <Route path="/home" element={<Landing />} />
-
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        <Route path="/community" element={
-          <div style={{ color: "white", textAlign: "center", paddingTop: "80px" }}>
-            Community Coming Soon!
-          </div>
-        } />
+        <Route path="/community" element={<Community />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/myspace" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }

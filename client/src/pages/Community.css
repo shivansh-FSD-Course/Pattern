@@ -1,0 +1,143 @@
+.community-container {
+  background: #000;
+  min-height: 100vh;
+  overflow-y: auto;
+  font-family: "VT323", monospace;
+  color: #cfffdf;
+  position: relative;
+}
+
+/* FLOATING MATH SYMBOLS */
+.floating-math {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.float-symbol {
+  position: absolute;
+  top: 110%;
+  font-size: 22px;
+  opacity: 0.15;
+  color: #54ff85;
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  from {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+  to {
+    transform: translateY(-140vh);
+    opacity: 0;
+  }
+}
+
+/* PAGE LAYOUT */
+.community-layout {
+  display: flex;
+  gap: 30px;
+  padding: 50px;
+  position: relative;
+  z-index: 3;
+}
+
+/* LEFT SIDE */
+.community-left {
+  flex: 2;
+}
+
+/* POST CARDS */
+.post-card {
+  background: rgba(0, 25, 0, 0.4);
+  border: 1px solid #66ff99;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 40px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 18px #004d1a inset, 0 0 12px #00330f;
+}
+
+.post-header {
+  background: rgba(0, 40, 0, 0.6);
+  padding: 10px;
+  border-bottom: 1px solid #66ff99;
+  border-radius: 6px;
+}
+
+.user-name {
+  font-size: 18px;
+  color: #92ffbf;
+}
+
+.post-body {
+  margin-top: 20px;
+}
+
+.post-title {
+  font-size: 26px;
+  color: #b8ffc9;
+}
+
+.post-content {
+  margin-top: 10px;
+  color: #e6ffe9;
+  line-height: 1.4rem;
+}
+
+/* COMMENTS */
+.post-comments {
+  margin-top: 25px;
+}
+
+.comment {
+  margin-top: 8px;
+  color: #ccffd6;
+}
+
+/* RIGHT SIDE */
+.community-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.profile-box,
+.new-comment-box {
+  background: rgba(0, 20, 0, 0.5);
+  border: 1px solid #55ff99;
+  padding: 20px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+/* TEXTAREAS */
+.profile-textarea,
+.comment-input {
+  width: 100%;
+  height: 90px;
+  background: #001900;
+  border: 1px solid #55ff99;
+  color: #cfffdf;
+  padding: 10px;
+  resize: none;
+  font-size: 16px;
+}
+
+.comment-btn {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid #66ff99;
+  color: #66ff99;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.comment-btn:hover {
+  background: #66ff99;
+  color: #000;
+}
