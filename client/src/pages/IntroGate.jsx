@@ -10,59 +10,40 @@ export default function IntroGate({ onEnter }) {
 
   const symbols = ["π","φ","∑","∞","λ","μ","Δ","σ","ƒ","ψ","Ω","θ","η","τ","β"];
 
-  // CRT scanlines
-  const crtStyle = {
-    backgroundImage:
-      "repeating-linear-gradient(rgba(0,255,0,0.07) 0px, rgba(0,255,0,0.07) 2px, transparent 2px, transparent 4px)",
-  };
-
-  // Radial breathing glow
-  const glowStyle = {
-    background:
-      "radial-gradient(circle, rgba(0,255,100,0.15), transparent 70%)",
-  };
-
   return (
-    <div
-      className="
-        relative w-full h-screen bg-black overflow-hidden flex justify-center items-center
-      "
-    >
-      {/* ─────────────────────────────── */}
-      {/* CRT SCANLINES */}
-      {/* ─────────────────────────────── */}
-      <div
-        className="absolute inset-0 z-10 pointer-events-none opacity-40"
-        style={crtStyle}
-      ></div>
+    <div className="relative w-full h-screen bg-black overflow-hidden flex justify-center items-center font-space">
 
-      {/* ─────────────────────────────── */}
-      {/* RADIAL GLOW */}
-      {/* ─────────────────────────────── */}
-      <div
-        className="
-          absolute w-[600px] h-[600px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
-          blur-[70px] animate-pulseGlow
-        "
-        style={glowStyle}
-      ></div>
+      {/* ─────── STARFIELD (TWINKLE) ─────── */}
+      <div className="absolute inset-0 z-0">
+        {Array.from({ length: 180 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-[2px] h-[2px] bg-white/60 rounded-full animate-twinkle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              opacity: Math.random(),
+            }}
+          ></div>
+        ))}
+      </div>
 
-      {/* ─────────────────────────────── */}
-      {/* FLOATING FORMULAS */}
-      {/* ─────────────────────────────── */}
-      <div className="absolute inset-0 pointer-events-none z-20">
-        {Array.from({ length: 28 }).map((_, i) => (
+      {/* ─────── FLOATING MATH GLYPHS ─────── */}
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {Array.from({ length: 35 }).map((_, i) => (
           <span
             key={i}
             className="
-              absolute text-[26px] text-[#65ff8f] opacity-20 
+              absolute text-[26px] text-[#65ff8f] opacity-30
               drop-shadow-[0_0_6px_#65ff8f]
-              animate-[floatFormula_12s_linear_infinite]
+              animate-glyphFloat
             "
             style={{
               left: `${Math.random() * 100}%`,
-              top: `${20 + Math.random() * 60}%`,
-              animationDelay: `${Math.random() * 5}s`,
+              top: `${70 + Math.random() * 40}%`,
+              animationDelay: `${Math.random() * 6}s`,
+              animationDuration: `${9 + Math.random() * 6}s`,
             }}
           >
             {symbols[i % symbols.length]}
@@ -70,49 +51,64 @@ export default function IntroGate({ onEnter }) {
         ))}
       </div>
 
-      {/* ─────────────────────────────── */}
-      {/* WHITE FLASH ON EXIT */}
-      {/* ─────────────────────────────── */}
+      {/* ─────── AURORA RING ─────── */}
+      <div
+        className="
+          absolute w-[900px] h-[900px] rounded-full blur-[160px]
+          animate-aurora opacity-40
+        "
+        style={{
+          background:
+            "conic-gradient(from 0deg, rgba(0,255,200,0.15), transparent 60%)",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      ></div>
+
+      {/* ─────── EXIT FLASH ─────── */}
       <div
         className={`
           absolute inset-0 bg-white opacity-0 pointer-events-none z-[9999]
-          ${exit ? "animate-[flashOut_0.9s_ease-out_forwards]" : ""}
+          ${exit ? "animate-flashOut" : ""}
         `}
       ></div>
 
-      {/* ─────────────────────────────── */}
-      {/* CONTENT */}
-      {/* ─────────────────────────────── */}
+      {/* ─────── CONTENT ─────── */}
       <div
         className={`
           relative z-50 text-center transition-all duration-500
-          ${exit ? "animate-[exitCollapse_0.8s_ease-in_forwards]" : ""}
+          ${exit ? "animate-exitShrink" : ""}
         `}
       >
         <h1
           className="
-            text-[64px] text-[#9aff9a] 
-            drop-shadow-[0_0_22px_#9aff9a,0_0_40px_#4fff4f]
-            tracking-[4px] mb-2
+            text-[70px] text-transparent bg-clip-text 
+            bg-gradient-to-r from-[#96dfff] via-[#d4b3ff] to-[#9affd3]
+            drop-shadow-[0_0_22px_#8aefff]
+            tracking-[4px] mb-4
           "
         >
           PATTERNCRAFT
         </h1>
 
-        <p className="text-[18px] text-[#e6e6d5] opacity-85 mb-10">
-          A Portal Into Mathematical Worlds
+        <p className="text-[20px] text-white/80 mb-10">
+          Enter a Universe of Mathematical Patterns
         </p>
 
         <button
           onClick={handleEnter}
           className="
-            px-10 py-3 border-2 border-neonGreen text-neonGreen 
-            uppercase tracking-[1px] font-mono
-            transition-all duration-200 
-            hover:bg-neonGreen hover:text-black hover:shadow-[0_0_25px_#8aff8a]
+            px-10 py-3 rounded-full border border-[#68e6ff]
+            text-[#96eaff] tracking-[1px]
+            bg-black/20 backdrop-blur-md
+            shadow-[0_0_15px_#0066aa66]
+            transition-all duration-300
+            hover:bg-[#96eaff] hover:text-black
+            hover:shadow-[0_0_25px_#96eaff]
           "
         >
-          ENTER PATTERNCRAFT
+          ENTER
         </button>
       </div>
     </div>

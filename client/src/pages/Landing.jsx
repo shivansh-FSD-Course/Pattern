@@ -1,161 +1,121 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+
+const GLYPHS = ["π","φ","∞","Σ","∫","ψ","λ","Ω","μ","θ","τ","β"];
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
-  const goldGlyphs = ["π","φ","∞","Σ","∫","e","i","ψ","λ","∆","Ω","μ"];
-  const greenGlyphs = ["log","sin","cos","det","f(x)","∂","∇","θ","β","γ","δ"];
-
-  const handleEnterCommunity = () => {
-    setLoading(true);
-    setTimeout(() => navigate("/community"), 1300);
-  };
-
-  const handleMySpace = () => {
-    setLoading(true);
-    setTimeout(() => navigate("/dashboard"), 1300);
-  };
-
-  // binary background as data URI
-  const dataStreamStyle = {
-    backgroundImage:
-      "url(\"data:image/svg+xml,<svg width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><text x='50%' y='50%' fill='rgba(0,255,0,0.07)' font-size='32' text-anchor='middle'>0101010101010101010101</text></svg>\")",
-  };
-
-  // radar sweep style
-  const radarStyle = {
-    backgroundImage:
-      "conic-gradient(from 0deg, rgba(0,255,0,0.12), transparent 30%)",
-  };
-
-  // CRT overlay style
-  const crtStyle = {
-    backgroundImage:
-      "repeating-linear-gradient(to bottom, rgba(0,255,0,0.03) 0px, rgba(0,255,0,0.03) 2px, transparent 3px)",
-  };
-
-  // scanline loader style
-  const scanlineStyle = {
-    backgroundImage:
-      "repeating-linear-gradient(to bottom, rgba(0,255,0,0.2) 0px, rgba(0,255,0,0.15) 2px, rgba(0,255,0,0.05) 4px)",
-  };
+  const goToCommunity = () => navigate("/community");  // ProtectedRoute handles auth
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black font-vt text-[#e8ffe8]">
+    <div className="relative w-full h-screen bg-[#03040a] overflow-hidden text-white">
 
-      {/* SCANLINE LOADER */}
-      {loading && (
-        <div
-          className="fixed inset-0 z-[9999] backdrop-blur-sm animate-scanline pointer-events-none"
-          style={scanlineStyle}
-        />
-      )}
+      {/* BACKGROUND GRADIENT */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(40,60,120,0.4),#03040a_70%)]"></div>
 
-      {/* HEADER */}
-      <header className="absolute top-5 left-10 right-10 flex justify-between items-center z-50">
-        <h1 className="text-[32px] text-neonGreen drop-shadow-[0_0_12px_#8aff8a]">
-          PATTERNCRAFT
-        </h1>
-
-        <div className="flex gap-5">
-          <button
-            className="px-5 py-2 text-[16px] border-2 border-neonGreen text-neonGreen bg-transparent transition-colors duration-200 hover:bg-neonGreen hover:text-black"
-            onClick={() => navigate("/login")}
-          >
-            LOGIN
-          </button>
-
-          <button
-            className="px-5 py-2 text-[16px] border-2 border-neonGreen text-neonGreen bg-transparent transition-colors duration-200 hover:bg-neonGreen hover:text-black"
-            onClick={() => navigate("/register")}
-          >
-            REGISTER
-          </button>
-
-          <button
-            className="px-5 py-2 text-[16px] border-2 border-neonGreen text-neonGreen bg-transparent transition-colors duration-200 hover:bg-neonGreen hover:text-black"
-            onClick={handleMySpace}
-          >
-            MY SPACE
-          </button>
-        </div>
-      </header>
-
-      {/* CRT OVERLAY */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-35 z-10"
-        style={crtStyle}
-      />
-
-      {/* DATA STREAM BACKGROUND */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-cover animate-dataFloat z-20"
-        style={dataStreamStyle}
-      />
-
-      {/* RADAR SWEEP */}
-      <div
-        className="pointer-events-none absolute inset-0 animate-radarSpin z-30"
-        style={radarStyle}
-      />
-
-      {/* OUTER GLYPH RING — GOLD */}
-      <div className="pointer-events-none absolute inset-0 w-full h-full z-40 animate-spinSlow">
-        {goldGlyphs.map((g, i) => (
+      {/* STARFIELD */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {Array.from({ length: 140 }).map((_, i) => (
           <span
-            key={`outer-${i}`}
-            className="absolute top-1/2 left-1/2 origin-center pointer-events-none"
+            key={i}
+            className="absolute w-[2px] h-[2px] bg-white rounded-full opacity-30 animate-twinkle"
             style={{
-              transform: `rotate(${i * (360 / goldGlyphs.length)}deg) translate(calc(35vmin))`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${2.2 + Math.random() * 3}s`,
             }}
-          >
-            <span className="text-[20px] opacity-[0.18] text-neonGold drop-shadow-[0_0_6px_currentColor]">
-              {g}
-            </span>
-          </span>
+          />
         ))}
       </div>
 
-      {/* INNER GLYPH RING — GREEN */}
-      <div className="pointer-events-none absolute inset-0 w-full h-full z-40 animate-spinReverse">
-        {greenGlyphs.map((g, i) => (
-          <span
-            key={`inner-${i}`}
-            className="absolute top-1/2 left-1/2 origin-center pointer-events-none"
-            style={{
-              transform: `rotate(${i * (360 / greenGlyphs.length)}deg) translate(calc(27vmin))`,
-            }}
-          >
-            <span className="text-[20px] opacity-[0.18] text-neonTeal drop-shadow-[0_0_6px_currentColor]">
+      {/* ORBITS + GLYPHS (Right side) */}
+      <div className="absolute right-[-8%] top-[10%] w-[700px] h-[700px] opacity-70 pointer-events-none">
+
+        {/* OUTER ORBIT */}
+        <svg className="absolute inset-0 animate-spinSlow" viewBox="0 0 600 600">
+          <circle
+            cx="300"
+            cy="300"
+            r="250"
+            stroke="rgba(0,200,255,0.45)"
+            strokeWidth="2"
+            fill="none"
+            strokeDasharray="18 36"
+          />
+        </svg>
+
+        {/* INNER ORBIT */}
+        <svg className="absolute inset-0 animate-spinReverse" viewBox="0 0 600 600">
+          <circle
+            cx="300"
+            cy="300"
+            r="170"
+            stroke="rgba(255,160,240,0.45)"
+            strokeWidth="2"
+            fill="none"
+            strokeDasharray="14 28"
+          />
+        </svg>
+
+        {/* GLYPHS FLOATING AROUND ORBITS */}
+        {GLYPHS.map((g, i) => {
+          const angle = (i / GLYPHS.length) * 2 * Math.PI;
+          const radius = 210;
+
+          return (
+            <span
+              key={i}
+              className="
+                absolute text-[22px] text-cyan-300 
+                opacity-80 drop-shadow-[0_0_6px_rgba(0,255,255,0.5)]
+                animate-glyphFloat
+              "
+              style={{
+                left: `${300 + radius * Math.cos(angle)}px`,
+                top: `${300 + radius * Math.sin(angle)}px`,
+                animationDelay: `${i * 0.2}s`,
+              }}
+            >
               {g}
             </span>
-          </span>
-        ))}
+          );
+        })}
       </div>
 
       {/* MAIN CONTENT */}
-      <main className="relative z-50 text-center mt-[20vh]">
-        {/* hero glow */}
-        <div className="w-[350px] h-[350px] mx-auto blur-[100px] animate-pulseGlow bg-[radial-gradient(circle,rgba(0,255,180,0.25),transparent)]" />
+      <div className="relative z-20 h-full flex flex-col justify-center pl-[10%] max-w-xl">
 
-        <h2 className="mt-[-140px] text-[58px] leading-[1.1em] text-[#fffad3] drop-shadow-[0_0_14px_#fff6a3] tracking-[2px]">
-          DISCOVER HIDDEN <br /> PATTERNS
-        </h2>
+        <h1
+          className="
+            text-6xl font-bold leading-tight mb-4
+            text-transparent bg-clip-text
+            bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300
+          "
+        >
+          Uncover the <br /> Patterns
+        </h1>
 
-        <p className="mt-[18px] text-[17px] text-[#dcdcd0] opacity-90">
-          Upload your data and let PatternCraft uncover the <br />
-          math that shapes it.
+        <p className="mt-4 text-lg text-gray-300 leading-relaxed">
+          Transform raw data into mesmerizing mathematical art.
+          Watch as AI reveals Fibonacci sequences, golden ratios,
+          and fractal beauty in stunning visualizations.
         </p>
 
         <button
-          className="relative z-50 mt-[35px] px-[38px] py-[14px] text-[16px] border-2 border-neonGreen text-neonGreen bg-transparent tracking-[1px] transition-colors duration-200 hover:bg-neonGreen hover:text-black"
-          onClick={handleEnterCommunity}
+          onClick={goToCommunity}
+          className="
+            mt-10 px-10 py-3 text-lg rounded-full
+            border border-cyan-300 text-cyan-300
+            hover:bg-cyan-300 hover:text-black
+            transition-all duration-300
+            shadow-[0_0_12px_rgba(0,255,255,0.4)]
+          "
         >
-          ENTER THE COMMUNITY
+          Explore Community
         </button>
-      </main>
+      </div>
     </div>
   );
 }

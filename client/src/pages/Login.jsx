@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
-
 export default function Login() {
   const navigate = useNavigate();
 
@@ -9,6 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  
 
   const handleLogin = async (e) => {
     e.preventDefault();
