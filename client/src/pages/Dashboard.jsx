@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+
+const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
 export default function Dashboard() {
   const [username, setUsername] = useState("YourUsername");
@@ -8,55 +10,92 @@ export default function Dashboard() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [caption, setCaption] = useState("");
 
-  const handleFileUpload = (e) => {
+  function handleFileUpload(e) {
     const file = e.target.files[0];
     setUploadedFile(file);
+    setPreviewImage("/placeholder_visual.png"); // TEMP
+  }
 
-    // temp fake preview
-    setPreviewImage("/placeholder_visual.png");
-  };
+  /* ───────────────────────────────
+      FLOATING GLYPH BACKGROUND
+  ─────────────────────────────── */
+  const glyphs = useMemo(
+    () =>
+      Array.from({ length: 30 }).map(() => ({
+        char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+        left: Math.random() * 95,
+        top: Math.random() * 95,
+        opacity: 0.015 + Math.random() * 0.035,
+        size: 40 + Math.random() * 60,
+        rotate: Math.random() * 40 - 20
+      })),
+    []
+  );
 
   return (
-    <div className="relative w-full min-h-screen bg-black text-[#d7ffd7] font-vt overflow-y-auto pb-20">
+    <div className="relative w-full min-h-screen bg-paper text-ink overflow-y-auto pb-24">
 
-      {/* CRT scanline layer */}
-      <div className="
-        pointer-events-none absolute inset-0 z-10
-        bg-[repeating-linear-gradient(to_bottom,rgba(0,255,0,0.04)_0px,rgba(0,255,0,0.04)_2px,transparent_3px)]
-      "></div>
+      {/* ───────────────────────────────
+          BACKGROUND DECOR
+      ─────────────────────────────── */}
+      <div className="absolute inset-0 pointer-events-none">
+        {glyphs.map((g, i) => (
+          <span
+            key={i}
+            className="absolute font-serif math-float"
+            style={{
+              left: `${g.left}%`,
+              top: `${g.top}%`,
+              opacity: g.opacity,
+              fontSize: `${g.size}px`,
+              transform: `rotate(${g.rotate}deg)`
+            }}
+          >
+            {g.char}
+          </span>
+        ))}
+      </div>
 
-      {/* HEADER */}
-      <header className="relative z-20 px-10 py-6">
-        <h1 className="text-[42px] text-neonGreen drop-shadow-[0_0_12px_#8aff8a]">
-          MY SPACE
+      {/* ───────────────────────────────
+          HEADER
+      ─────────────────────────────── */}
+      <header className="relative z-10 px-10 pt-14 pb-6">
+        <h1 className="font-serif text-[46px] tracking-wide">
+          My Space
         </h1>
       </header>
 
-      {/* MAIN GRID */}
-      <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-10 px-10 pb-10">
+      {/* ───────────────────────────────
+          MAIN GRID
+      ─────────────────────────────── */}
+      <div className="relative z-10 max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 px-10">
 
-        {/* LEFT SIDE (Profile Card) */}
-        <div className="
-          col-span-1 bg-[rgba(0,40,0,0.4)] border border-[#00ff8c44]
-          rounded-lg p-6 backdrop-blur-sm shadow-[0_0_15px_#00ff8c22]
-        ">
-          <h2 className="text-[28px] text-[#c8ffc8] mb-4">Profile</h2>
+        {/* LEFT PROFILE CARD */}
+        <div
+          className="
+            bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
+            shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
+          "
+        >
+          <h2 className="font-serif text-[28px] mb-4">Profile</h2>
 
-          <label className="block text-lg mb-1">Username</label>
+          <label className="text-sm opacity-70">Username</label>
           <input
             className="
-              w-full p-3 text-xl bg-[#001900] border border-[#00ff8c55]
-              text-[#9dff9d] outline-none
+              mt-1 w-full border border-ink/25 rounded-sm px-3 py-2
+              focus:border-ink outline-none bg-white/70
+              transition
             "
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
 
-          <label className="block text-lg mt-3 mb-1">Bio</label>
+          <label className="text-sm opacity-70 mt-4 block">Bio</label>
           <textarea
             className="
-              w-full h-32 p-3 text-xl bg-[#001900] border border-[#00ff8c55]
-              text-[#9dff9d] outline-none resize-none
+              mt-1 w-full h-32 border border-ink/25 rounded-sm px-3 py-2
+              resize-none bg-white/70 outline-none
+              focus:border-ink
             "
             value={bio}
             onChange={(e) => setBio(e.target.value)}
@@ -64,51 +103,49 @@ export default function Dashboard() {
 
           <button
             className="
-              mt-4 px-5 py-3 text-xl border-2 border-neonGreen text-neonGreen
-              hover:bg-neonGreen hover:text-black transition font-vt
+              mt-5 border border-ink rounded-sm px-6 py-2 text-sm
+              hover:bg-ink hover:text-paper transition
             "
           >
             Save Changes
           </button>
         </div>
 
-        {/* RIGHT (Upload + Preview) */}
-        <div className="
-          md:col-span-2 bg-[rgba(0,40,0,0.4)] border border-[#00ff8c44]
-          rounded-lg p-6 backdrop-blur-sm shadow-[0_0_15px_#00ff8c22]
-        ">
-          <h2 className="text-[28px] text-[#c8ffc8] mb-4">Upload Dataset</h2>
+        {/* RIGHT UPLOAD AREA */}
+        <div
+          className="
+            md:col-span-2 bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
+            shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
+          "
+        >
+          <h2 className="font-serif text-[28px] mb-4">Upload Dataset</h2>
 
           <input
             type="file"
             accept=".csv"
-            className="mb-3 text-neonGreen text-lg"
+            className="text-sm opacity-80 mb-3"
             onChange={handleFileUpload}
           />
 
           {uploadedFile && (
             <div>
-              <p className="text-lg mb-3">
+              <p className="mt-1 mb-4 text-[15px] opacity-80">
                 Selected: <strong>{uploadedFile.name}</strong>
               </p>
 
-              {/* Preview */}
               {previewImage && (
-                <div className="my-4">
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    className="w-full rounded-md border border-[#8aff8a55]"
-                  />
-                </div>
+                <img
+                  src={previewImage}
+                  className="w-full rounded-sm border border-ink/15 mb-5"
+                />
               )}
 
               <button
-                className="
-                  mt-4 px-5 py-3 text-xl border-2 border-neonGreen text-neonGreen
-                  hover:bg-neonGreen hover:text-black transition font-vt
-                "
                 onClick={() => setShowPublishModal(true)}
+                className="
+                  border border-ink rounded-sm px-6 py-2 text-sm
+                  hover:bg-ink hover:text-paper transition
+                "
               >
                 Publish to Community
               </button>
@@ -117,57 +154,66 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* MODAL */}
+      {/* ───────────────────────────────
+          MODAL
+      ─────────────────────────────── */}
       {showPublishModal && (
-        <div className="
-          fixed inset-0 bg-[rgba(0,0,0,0.75)] z-[9999]
-          flex justify-center items-center px-4
-        ">
-          <div className="
-            w-[450px] bg-[#002200] rounded-xl p-6 border border-[#00ff8a77]
-            shadow-[0_0_30px_#00ff8a55]
-          ">
-            <h3 className="text-[26px] text-neonGreen mb-3">Publish Preview</h3>
+        <div
+          className="
+            fixed inset-0 bg-[rgba(0,0,0,0.45)] backdrop-blur-sm
+            flex justify-center items-center z-[999]
+            px-6
+          "
+        >
+          <div
+            className="
+              bg-white/70 border border-ink/20 p-6 rounded-sm
+              shadow-[0_8px_32px_rgba(0,0,0,0.22)]
+              max-w-[480px] w-full
+            "
+          >
+            <h3 className="font-serif text-[26px] mb-3">
+              Publish Preview
+            </h3>
 
             {previewImage && (
               <img
                 src={previewImage}
-                alt="preview"
-                className="w-full rounded-md border border-[#00ff8a55] mb-4"
+                className="w-full rounded-sm border border-ink/15 mb-4"
               />
             )}
 
             <textarea
               className="
-                w-full h-24 resize-none bg-[#001900] border border-[#00ff8a55]
-                text-neonGreen p-3 text-lg outline-none
+                w-full h-24 border border-ink/25 rounded-sm px-3 py-2 resize-none
+                bg-white/70 outline-none focus:border-ink
               "
               placeholder="Add a caption..."
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-            ></textarea>
+            />
 
-            <div className="flex justify-between mt-5">
+            <div className="flex justify-end gap-3 mt-5">
+
               <button
                 className="
-                  px-5 py-2 text-xl border-2 border-neonGreen text-neonGreen
-                  hover:bg-neonGreen hover:text-black transition font-vt
+                  border border-ink px-5 py-1.5 rounded-sm text-sm
+                  hover:bg-ink hover:text-paper transition
                 "
               >
                 Publish
               </button>
 
               <button
-                className="
-                  px-5 py-2 text-xl border-2 border-[#ff6b6b] text-[#ff6b6b]
-                  hover:bg-[#ff6b6b] hover:text-black transition font-vt
-                "
                 onClick={() => setShowPublishModal(false)}
+                className="
+                  px-5 py-1.5 rounded-sm text-sm border border-[#b44] text-[#b44]
+                  hover:bg-[#b44] hover:text-white transition
+                "
               >
                 Cancel
               </button>
             </div>
-
           </div>
         </div>
       )}

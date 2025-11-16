@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+
+const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
 export default function Register() {
   const navigate = useNavigate();
@@ -8,7 +10,7 @@ export default function Register() {
   const [form, setForm] = useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -17,6 +19,10 @@ export default function Register() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  // Password rules
+  const isPasswordValid =
+    form.password.length >= 10 && /[^A-Za-z0-9]/.test(form.password);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,105 +38,78 @@ export default function Register() {
         return;
       }
 
-      setTimeout(() => navigate("/login"), 800);
+      setTimeout(() => navigate("/login"), 500);
     } catch (error) {
       console.error(error);
-      setErrorMsg("Server error.");
+      setErrorMsg(error.response?.data?.message || "Server error.");
       setLoading(false);
     }
   };
 
-  // scanline effect
-  const scanStyle = {
-    backgroundImage:
-      "repeating-linear-gradient(rgba(255,255,255,0.03), rgba(255,255,255,0.03) 1px, transparent 3px)",
-  };
+  /* ───────────────────────────────
+      MATH BACKGROUND EFFECT
+  ─────────────────────────────── */
+  const glyphs = useMemo(
+    () =>
+      Array.from({ length: 26 }).map(() => ({
+        char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+        left: Math.random() * 95,
+        top: Math.random() * 95,
+        size: 38 + Math.random() * 55,
+        opacity: 0.015 + Math.random() * 0.035,
+        rotate: Math.random() * 40 - 20,
+      })),
+    []
+  );
 
   return (
-    <div
-      className="
-        relative flex justify-center items-center w-full h-screen bg-black 
-        font-pixel overflow-hidden
-        animate-[crtFlicker_0.2s_steps(2)_infinite]
-      "
-    >
-      {/* SCANLINE LOADER */}
-      {loading && (
-        <div
-          className="
-            fixed inset-0 z-50 animate-[scanline_0.15s_linear_infinite] 
-            backdrop-blur-[2px]
-          "
-          style={{
-            background:
-              "repeating-linear-gradient(to bottom, rgba(0,255,0,0.2) 0px, rgba(0,255,0,0.15) 2px, rgba(0,255,0,0.05) 4px)",
-          }}
-        ></div>
-      )}
-
-      {/* CRT scanlines */}
-      <div
-        className="absolute inset-0 z-10 pointer-events-none"
-        style={scanStyle}
-      ></div>
-
-      {/* Floating symbols */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
-        {["π","σ","μ","Ω","∞","φ","ψ","Δ","ƒ","λ"].map((s, i) => (
+    <div className="relative w-full min-h-screen bg-paper text-ink flex items-center justify-center overflow-hidden">
+      {/* BACKGROUND GLYPHS */}
+      <div className="absolute inset-0 pointer-events-none">
+        {glyphs.map((g, i) => (
           <span
             key={i}
-            className="
-              absolute text-[22px] text-[#7cff91] opacity-[0.12]
-              animate-[regFloat_linear_infinite]
-            "
+            className="absolute font-serif math-float"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${6 + Math.random() * 6}s`,
+              left: `${g.left}%`,
+              top: `${g.top}%`,
+              opacity: g.opacity,
+              fontSize: `${g.size}px`,
+              transform: `rotate(${g.rotate}deg)`,
             }}
           >
-            {s}
+            {g.char}
           </span>
         ))}
       </div>
 
-      {/* REGISTER CARD */}
+      {/* REGISTER PANEL */}
       <form
         onSubmit={handleSubmit}
         className="
-          relative z-30 w-[360px]
-          bg-[rgba(20,20,20,0.7)] p-9 
-          border border-[#2aff2a]
-          shadow-[0_0_18px_#41ff41,inset_0_0_25px_#093b09]
-          animate-[fadeInUp_0.6s_ease-out]
-          flex flex-col gap-4
+          relative z-10 w-[380px]
+          bg-white/60 backdrop-blur-md border border-ink/15 rounded-sm
+          shadow-[0_8px_28px_rgba(0,0,0,0.06)]
+          p-10 flex flex-col gap-5
         "
       >
-        <h1
-          className="
-            text-center text-[26px] text-[#8aff8a] mb-4
-            drop-shadow-[0_0_14px_#38ff38]
-          "
-        >
-          CREATE ACCOUNT
+        <h1 className="font-serif text-[32px] mb-2 text-center">
+          Create Account
         </h1>
 
-        {/* ERROR */}
+        <p className="text-[13px] opacity-70 text-center font-serif mb-3">
+          Join PatternCraft and begin your discovery.
+        </p>
+
+        {/* ERROR MESSAGE */}
         {errorMsg && (
-          <div
-            className="
-              bg-[rgba(255,0,0,0.18)] border border-[#ff3b3b]
-              text-[#ff7a7a] p-2 text-center text-[13px] rounded
-              shadow-[0_0_6px_#ff3b3b]
-            "
-          >
+          <div className="text-center text-[13px] text-[#b24444] bg-[#ffdad6] py-2 rounded">
             {errorMsg}
           </div>
         )}
 
         {/* USERNAME */}
-        <label className="text-[#cfcfcf] text-[13px]">Username</label>
+        <label className="text-[13px] opacity-75">Username</label>
         <input
           type="text"
           name="username"
@@ -139,15 +118,13 @@ export default function Register() {
           value={form.username}
           onChange={handleChange}
           className="
-            w-full bg-[#0d0d0d] text-[#c7ffc7] p-2 text-[14px]
-            border border-[#3eff3e] outline-none transition
-            focus:border-[#00ff00] focus:shadow-[0_0_12px_#1fff1f]
-            font-pixel
+            border border-ink/30 rounded-sm px-3 py-2 bg-white/70
+            focus:border-ink outline-none text-sm transition
           "
         />
 
         {/* EMAIL */}
-        <label className="text-[#cfcfcf] text-[13px]">Email</label>
+        <label className="text-[13px] opacity-75">Email</label>
         <input
           type="email"
           name="email"
@@ -156,15 +133,13 @@ export default function Register() {
           value={form.email}
           onChange={handleChange}
           className="
-            w-full bg-[#0d0d0d] text-[#c7ffc7] p-2 text-[14px]
-            border border-[#3eff3e] outline-none transition
-            focus:border-[#00ff00] focus:shadow-[0_0_12px_#1fff1f]
-            font-pixel
+            border border-ink/30 rounded-sm px-3 py-2 bg-white/70
+            focus:border-ink outline-none text-sm transition
           "
         />
 
         {/* PASSWORD */}
-        <label className="text-[#cfcfcf] text-[13px]">Password</label>
+        <label className="text-[13px] opacity-75">Password</label>
         <input
           type="password"
           name="password"
@@ -173,32 +148,35 @@ export default function Register() {
           value={form.password}
           onChange={handleChange}
           className="
-            w-full bg-[#0d0d0d] text-[#c7ffc7] p-2 text-[14px]
-            border border-[#3eff3e] outline-none transition
-            focus:border-[#00ff00] focus:shadow-[0_0_12px_#1fff1f]
-            font-pixel
+            border border-ink/30 rounded-sm px-3 py-2 bg-white/70
+            focus:border-ink outline-none text-sm transition
           "
         />
 
-        {/* BUTTON */}
+        {/* PASSWORD RULES */}
+        {!isPasswordValid && form.password.length > 0 && (
+          <p className="text-red-500 text-xs">
+            Password must be at least 10 characters and include a special
+            character.
+          </p>
+        )}
+
+        {/* SUBMIT BUTTON */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isPasswordValid}
           className="
-            w-full py-3 border-2 border-[#00ff00] text-[#00ff00]
-            text-[15px] font-pixel transition
-            hover:bg-[#00ff00] hover:text-black hover:shadow-[0_0_18px_#00ff00]
-            disabled:opacity-40 disabled:cursor-not-allowed
+            mt-3 w-full border border-ink rounded-sm px-4 py-2 text-sm tracking-wide
+            hover:bg-ink hover:text-paper transition disabled:opacity-40
           "
         >
-          {loading ? "PLEASE WAIT..." : "REGISTER"}
+          {loading ? "Please wait…" : "Register"}
         </button>
 
-        {/* FOOTER SWITCH */}
-        <p className="text-center text-[#cfcfcf] text-[13px] mt-2">
+        <p className="text-center text-[13px] opacity-75 mt-1">
           Already have an account?{" "}
           <span
-            className="text-[#8aff8a] underline cursor-pointer"
+            className="underline cursor-pointer hover:text-accent-green"
             onClick={() => navigate("/login")}
           >
             Login

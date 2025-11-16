@@ -21,12 +21,11 @@ function IntroWrapper() {
   return <IntroGate onEnter={() => navigate("/home")} />;
 }
 
-// Simple layout that shows the navbar on top of each page
+// Layout wrapper: Navbar on top, soft paper background
 function Layout({ children }) {
   return (
-    <div className="relative w-full h-screen bg-black text-white overflow-hidden">
+    <div className="relative w-full min-h-screen bg-paper text-ink overflow-x-hidden">
       <Navbar />
-      {/* children handle their own backgrounds / hero layouts */}
       {children}
     </div>
   );
@@ -36,10 +35,10 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Intro screen has NO navbar */}
+        {/* Intro screen: no navbar */}
         <Route path="/" element={<IntroWrapper />} />
 
-        {/* Public pages wrapped in Layout */}
+        {/* Public pages with Navbar */}
         <Route
           path="/home"
           element={

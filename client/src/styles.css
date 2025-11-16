@@ -1,9 +1,199 @@
+/* ---------------------------------------------------
+   LOAD FONTS FIRST
+--------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Crimson+Pro:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+
+/* ---------------------------------------------------
+   TAILWIND
+--------------------------------------------------- */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Temporary global reset */
+
+/* ---------------------------------------------------
+   GLOBAL PAPER AESTHETIC
+--------------------------------------------------- */
 body {
-  font-family: 'VT323', monospace;
-  background: #000;
+  @apply bg-paper font-sans text-ink;
+  background: linear-gradient(135deg, #FDFBF7 0%, #F8F6F0 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0 2px,
+    rgba(0,0,0,0.025) 2px 4px
+  );
+}
+
+/* =====================================================================
+    ✦ INTRO PAGE ANIMATIONS
+===================================================================== */
+.pc-write { animation: pcWrite 11s ease-out forwards; }
+
+@keyframes pcWrite {
+  from { stroke-dashoffset: 1600; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes flashOut {
+  0%   { opacity: 0; }
+  35%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* =====================================================================
+    ✦ UNIVERSAL FLOATING MATH BACKGROUND
+===================================================================== */
+@keyframes floatSoft {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-6px); }
+}
+
+.math-float {
+  animation: floatSoft 8s ease-in-out infinite;
+}
+
+/* =====================================================================
+    ✦ LANDING PAGE SPIRAL ANIMATIONS
+===================================================================== */
+@keyframes spiralDraw { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
+@keyframes spiralRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.spiral-stroke {
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation:
+    spiralDraw 4s ease-out forwards,
+    spiralRotate 70s linear infinite 4s;
+}
+
+.hero-spiral { transform-origin: center center; }
+
+.spiral-ambient {
+  opacity: .14;
+  animation: floatSoft 9s ease-in-out infinite;
+}
+
+/* =====================================================================
+    ✦ FEATURE CARDS
+===================================================================== */
+.card-hover {
+  transition: transform .35s ease, box-shadow .35s ease;
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.14);
+}
+
+/* → Left vertical shine border */
+.feature-card {
+  position: relative;
+  overflow: hidden;
+}
+.feature-card::before {
+  content:"";
+  position:absolute;
+  left:0; top:0;
+  width:3px; height:0%;
+  opacity:0;
+  background:linear-gradient(#7BA591,#C9A961);
+  transition:height .35s ease, opacity .35s ease;
+}
+.feature-card:hover::before {
+  opacity:1;
+  height:100%;
+}
+
+/* =====================================================================
+    ✦ BORDER INK DRAW
+===================================================================== */
+.ink-border {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #222;
+  opacity: 0;
+  pointer-events: none;
+  animation: inkBorderDraw 1.25s ease forwards;
+}
+@keyframes inkBorderDraw {
+  0%   { opacity: 0; clip-path: inset(50% 50% 50% 50%); }
+  100% { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+/* =====================================================================
+    ✦ CTA BUTTON ARROW REVEAL
+===================================================================== */
+button .cta-arrow {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all .25s ease;
+}
+button:hover .cta-arrow {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+
+/* =====================================================================
+    ✦ ⭐ NEW — LANDING PAGE DESIGN RULES
+       (Matches your screenshot)
+===================================================================== */
+
+/* ✦ Thin underline below PATTERNCRAFT  ⟵ ADDED */
+.header-underline {
+  width: 100%;
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+  margin: 0.6rem 0 2.3rem 0;
+}
+
+/* ✦ Big serif hero title  ⟵ ADDED */
+.hero-title {
+  font-family: "Crimson Pro", serif;
+  font-size: clamp(42px, 5vw, 70px);
+  line-height: 1.08;
+  letter-spacing: -0.8px;
+}
+
+/* ✦ Hero subtitle text  ⟵ ADDED */
+.hero-sub {
+  max-width: 520px;
+  font-size: 17px;
+  opacity: 0.72;
+  line-height: 1.55;
+}
+
+/* ✦ Primary CTA button like mockup  ⟵ ADDED */
+.btn-primary {
+  background: #1b1b1b;
+  color: #fafafa;
+  padding: 14px 28px;
+  border: 1px solid #1b1b1b;
+  transition: all .25s;
+}
+.btn-primary:hover {
+  background: transparent;
+  color: #1b1b1b;
+}
+
+/* ✦ Outline CTA button  ⟵ ADDED */
+.btn-outline {
+  background: transparent;
+  padding: 14px 28px;
+  border: 1.5px solid #1b1b1b;
+  transition: all .25s;
+}
+.btn-outline:hover {
+  background: #1b1b1b;
+  color: white;
 }
