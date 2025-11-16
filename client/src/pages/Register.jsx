@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+// src/pages/Register.jsx
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
@@ -16,15 +17,19 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const isPasswordValid =
+    form.password.length >= 10 && /[^A-Za-z0-9]/.test(form.password);
+
+  /* Clear errors on form change */
+  useEffect(() => {
+    if (errorMsg) setErrorMsg("");
+  }, [form]);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Password rules
-  const isPasswordValid =
-    form.password.length >= 10 && /[^A-Za-z0-9]/.test(form.password);
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg("");
     setLoading(true);
@@ -33,22 +38,19 @@ export default function Register() {
       const res = await api.post("/auth/register", form);
 
       if (!res.data.success) {
-        setErrorMsg(res.data.message || "Registration failed");
-        setLoading(false);
-        return;
+        throw new Error(res.data.message || "Registration failed");
       }
 
       setTimeout(() => navigate("/login"), 500);
     } catch (error) {
       console.error(error);
-      setErrorMsg(error.response?.data?.message || "Server error.");
+      setErrorMsg(error.response?.data?.message || "Something went wrong.");
+    } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /* ───────────────────────────────
-      MATH BACKGROUND EFFECT
-  ─────────────────────────────── */
+  /* Background Glyph Effects */
   const glyphs = useMemo(
     () =>
       Array.from({ length: 26 }).map(() => ({
@@ -64,7 +66,7 @@ export default function Register() {
 
   return (
     <div className="relative w-full min-h-screen bg-paper text-ink flex items-center justify-center overflow-hidden">
-      {/* BACKGROUND GLYPHS */}
+      {/* FLOATING BACKGROUND GLYPHS */}
       <div className="absolute inset-0 pointer-events-none">
         {glyphs.map((g, i) => (
           <span
@@ -83,7 +85,7 @@ export default function Register() {
         ))}
       </div>
 
-      {/* REGISTER PANEL */}
+      {/* REGISTER CARD */}
       <form
         onSubmit={handleSubmit}
         className="
@@ -108,13 +110,12 @@ export default function Register() {
           </div>
         )}
 
-        {/* USERNAME */}
+        {/* USERNAME INPUT */}
         <label className="text-[13px] opacity-75">Username</label>
         <input
           type="text"
           name="username"
           required
-          autoComplete="off"
           value={form.username}
           onChange={handleChange}
           className="
@@ -123,13 +124,12 @@ export default function Register() {
           "
         />
 
-        {/* EMAIL */}
+        {/* EMAIL INPUT */}
         <label className="text-[13px] opacity-75">Email</label>
         <input
           type="email"
           name="email"
           required
-          autoComplete="off"
           value={form.email}
           onChange={handleChange}
           className="
@@ -138,13 +138,12 @@ export default function Register() {
           "
         />
 
-        {/* PASSWORD */}
+        {/* PASSWORD INPUT */}
         <label className="text-[13px] opacity-75">Password</label>
         <input
           type="password"
           name="password"
           required
-          autoComplete="off"
           value={form.password}
           onChange={handleChange}
           className="

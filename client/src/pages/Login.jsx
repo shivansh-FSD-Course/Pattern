@@ -1,20 +1,28 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+// src/pages/Login.jsx
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
 
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // redirect target after login
+  const redirectTo = location.state?.from || "/myspace";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ───────────────────────────────
-      FLOATING BACKGROUND GLYPHS
-  ─────────────────────────────── */
+  /* Reset error on input change */
+  useEffect(() => {
+    if (errorMsg) setErrorMsg("");
+  }, [email, password]);
+
+  /* Floaty math glyph decorator */
   const decor = useMemo(
     () =>
       Array.from({ length: 26 }).map(() => ({
@@ -28,6 +36,9 @@ export default function Login() {
     []
   );
 
+  /* ───────────────────────────────
+        LOGIN SUBMIT HANDLER
+  ─────────────────────────────── */
   async function handleLogin(e) {
     e.preventDefault();
     setErrorMsg("");
@@ -37,23 +48,24 @@ export default function Login() {
       const res = await api.post("/auth/login", { email, password });
 
       if (!res.data.success) {
-        setErrorMsg(res.data.message || "Login failed");
-        setLoading(false);
-        return;
+        throw new Error(res.data.message || "Login failed");
       }
 
       localStorage.setItem("token", res.data.token);
 
+      // fetch user object
       const userRes = await api.get("/auth/me", {
         headers: { Authorization: `Bearer ${res.data.token}` },
       });
 
       localStorage.setItem("user", JSON.stringify(userRes.data.user));
 
-      setTimeout(() => navigate("/myspace"), 500);
+      // 🔄 Redirect user to original target
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error(err);
-      setErrorMsg("Server error. Try again.");
+      setErrorMsg(err.response?.data?.message || "Server error. Try again.");
+    } finally {
       setLoading(false);
     }
   }
@@ -62,7 +74,7 @@ export default function Login() {
     <div className="relative w-full min-h-screen bg-paper text-ink flex items-center justify-center overflow-hidden">
 
       {/* ───────────────────────────────
-          FLOATING BACKGROUND
+          FLOATING BACKGROUND DECORATION
       ─────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none">
         {decor.map((g, i) => (
@@ -83,7 +95,7 @@ export default function Login() {
       </div>
 
       {/* ───────────────────────────────
-          LOGIN CARD
+          LOGIN CARD DESIGN
       ─────────────────────────────── */}
       <div
         className="
