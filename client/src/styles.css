@@ -1,5 +1,5 @@
 /* ---------------------------------------------------
-   LOAD FONTS FIRST
+   FONTS
 --------------------------------------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Crimson+Pro:wght@300;400;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap');
@@ -36,7 +36,7 @@ body::before {
 }
 
 /* =====================================================================
-    ✦ INTRO PAGE ANIMATIONS
+    INTRO PAGE ANIMATIONS
 ===================================================================== */
 .pc-write { animation: pcWrite 11s ease-out forwards; }
 
@@ -52,19 +52,41 @@ body::before {
 }
 
 /* =====================================================================
-    ✦ UNIVERSAL FLOATING MATH BACKGROUND
+    UNIVERSAL FLOATING MATH BACKGROUND (UPDATED WITH PARALLAX)
 ===================================================================== */
 @keyframes floatSoft {
-  0%,100% { transform: translateY(0px); }
-  50%     { transform: translateY(-6px); }
+  0%,100% { 
+    transform: translateY(0px) rotate(var(--rotate, 0deg)); 
+  }
+  50% { 
+    transform: translateY(-20px) rotate(var(--rotate, 0deg)); 
+  }
 }
 
 .math-float {
   animation: floatSoft 8s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  transition: transform 0.1s ease-out;
+}
+
+/*  CURSOR TRAIL FADE ANIMATION */
+@keyframes trail-fade {
+  0% {
+    opacity: 0.3;
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.5);
+  }
+}
+
+.animate-trail-fade {
+  animation: trail-fade 1.5s ease-out forwards;
 }
 
 /* =====================================================================
-    ✦ LANDING PAGE SPIRAL ANIMATIONS
+     LANDING PAGE SPIRAL ANIMATIONS
 ===================================================================== */
 @keyframes spiralDraw { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
 @keyframes spiralRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -85,7 +107,7 @@ body::before {
 }
 
 /* =====================================================================
-    ✦ FEATURE CARDS
+     FEATURE CARDS
 ===================================================================== */
 .card-hover {
   transition: transform .35s ease, box-shadow .35s ease;
@@ -115,7 +137,7 @@ body::before {
 }
 
 /* =====================================================================
-    ✦ BORDER INK DRAW
+     BORDER INK DRAW
 ===================================================================== */
 .ink-border {
   position: absolute;
@@ -131,7 +153,7 @@ body::before {
 }
 
 /* =====================================================================
-    ✦ CTA BUTTON ARROW REVEAL
+     CTA BUTTON ARROW REVEAL
 ===================================================================== */
 button .cta-arrow {
   opacity: 0;
@@ -145,11 +167,10 @@ button:hover .cta-arrow {
 
 
 /* =====================================================================
-    ✦ ⭐ NEW — LANDING PAGE DESIGN RULES
-       (Matches your screenshot)
+     NEW LANDING PAGE DESIGN RULES
 ===================================================================== */
 
-/* ✦ Thin underline below PATTERNCRAFT  ⟵ ADDED */
+/*  Thin underline below PATTERNCRAFT ADDED */
 .header-underline {
   width: 100%;
   height: 1px;
@@ -157,7 +178,7 @@ button:hover .cta-arrow {
   margin: 0.6rem 0 2.3rem 0;
 }
 
-/* ✦ Big serif hero title  ⟵ ADDED */
+/* Big serif hero title ADDED */
 .hero-title {
   font-family: "Crimson Pro", serif;
   font-size: clamp(42px, 5vw, 70px);
@@ -165,7 +186,7 @@ button:hover .cta-arrow {
   letter-spacing: -0.8px;
 }
 
-/* ✦ Hero subtitle text  ⟵ ADDED */
+/* Hero subtitle text ADDED */
 .hero-sub {
   max-width: 520px;
   font-size: 17px;
@@ -173,7 +194,7 @@ button:hover .cta-arrow {
   line-height: 1.55;
 }
 
-/* ✦ Primary CTA button like mockup  ⟵ ADDED */
+/* Primary CTA button like mockup ADDED */
 .btn-primary {
   background: #1b1b1b;
   color: #fafafa;
@@ -186,7 +207,7 @@ button:hover .cta-arrow {
   color: #1b1b1b;
 }
 
-/* ✦ Outline CTA button  ⟵ ADDED */
+/* Outline CTA button ADDED */
 .btn-outline {
   background: transparent;
   padding: 14px 28px;

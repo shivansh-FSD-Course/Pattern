@@ -5,9 +5,30 @@ const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [scrollY, setScrollY] = useState(0);
+  const [trails, setTrails] = useState([]);
 
   // Check if token exists (user logged in)
   const token = localStorage.getItem("token");
+
+  // Scroll handler for parallax
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Cursor trail handler
+  const handleMouseMove = (e) => {
+    const newTrail = {
+      id: Date.now() + Math.random(),
+      x: e.clientX,
+      y: e.clientY,
+      char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+    };
+    
+    setTrails(prev => [...prev.slice(-15), newTrail]);
+  };
 
   // Button click handlers based on auth state
   const handleStartExploring = () => {
@@ -39,13 +60,32 @@ export default function Landing() {
         opacity: 0.012 + Math.random() * 0.035,
         rotate: Math.random() * 40 - 20,
         delay: i * 0.15,
+        parallaxSpeed: 0.2 + Math.random() * 0.5, // Different speeds for depth
       })),
     };
   }, []);
 
   return (
-    <div className="relative w-full min-h-screen bg-paper text-ink overflow-hidden">
-      {/* BACKGROUND FLOATING DECOR */}
+    <div 
+      className="relative w-full min-h-screen bg-paper text-ink overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
+      {/* CURSOR TRAIL */}
+      {trails.map(trail => (
+        <span
+          key={trail.id}
+          className="fixed pointer-events-none text-accent-green/30 text-sm animate-trail-fade z-50"
+          style={{ 
+            left: trail.x - 10, 
+            top: trail.y - 10,
+            fontFamily: 'serif',
+          }}
+        >
+          {trail.char}
+        </span>
+      ))}
+
+      {/* BACKGROUND FLOATING DECOR WITH PARALLAX */}
       <div className="absolute inset-0 pointer-events-none">
         {mathDecor.glyphs.map((g, i) => (
           <span
@@ -58,7 +98,7 @@ export default function Landing() {
               opacity: g.opacity,
               '--rotate': `${g.rotate}deg`,
               '--delay': `${g.delay}s`,
-              transform: `rotate(${g.rotate}deg)`,
+              transform: `translateY(${scrollY * g.parallaxSpeed * 0.3}px) rotate(${g.rotate}deg)`,
             }}
           >
             {g.char}
@@ -100,6 +140,13 @@ export default function Landing() {
           >
             VIEW GALLERY
           </button>
+        </div>
+
+        {/* STATS COUNTER SECTION */}
+        <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-20">
+          <StatCounter end={1247} label="Patterns Found" />
+          <StatCounter end={89} label="Active Users" />
+          <StatCounter end={342} label="Visualizations" />
         </div>
 
         {/* FEATURE SECTION */}
@@ -155,10 +202,65 @@ export default function Landing() {
 }
 
 /* ───────────────────────────────
+      STATS COUNTER COMPONENT
+────────────────────────────── */
+function StatCounter({ end, label }) {
+  const [count, setCount] = useState(0);
+  const counterRef = useRef(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let start = 0;
+          const duration = 2000;
+          const increment = end / (duration / 16);
+          
+          const timer = setInterval(() => {
+            start += increment;
+            if (start >= end) {
+              setCount(end);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(start));
+            }
+          }, 16);
+
+          return () => clearInterval(timer);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    
+    if (counterRef.current) {
+      observer.observe(counterRef.current);
+    }
+
+    return () => {
+      if (counterRef.current) {
+        observer.unobserve(counterRef.current);
+      }
+    };
+  }, [end, hasAnimated]);
+
+  return (
+    <div ref={counterRef} className="text-center">
+      <div className="font-serif text-4xl text-accent-green mb-2">
+        {count.toLocaleString()}+
+      </div>
+      <div className="text-sm opacity-60 uppercase tracking-wide">{label}</div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────
       FEATURE CARD COMPONENT
 ────────────────────────────── */
 function FeatureCard({ icon, title, desc, delay }) {
   const [isVisible, setIsVisible] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -182,18 +284,32 @@ function FeatureCard({ icon, title, desc, delay }) {
     };
   }, []);
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientY - rect.top - rect.height / 2) / 25;
+    const y = (e.clientX - rect.left - rect.width / 2) / 25;
+    setTilt({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
+
   return (
     <div
       ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className={`
         feature-card
         p-10 bg-white/60 backdrop-blur-sm rounded-sm
         border border-ink/15
-        hover:-translate-y-1 hover:shadow-[0_8px_22px_rgba(0,0,0,0.08)]
+        hover:shadow-[0_8px_22px_rgba(0,0,0,0.08)]
         transition-all duration-700
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
       style={{
+        transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) ${isVisible ? 'translateY(0)' : 'translateY(32px)'}`,
         transitionDelay: isVisible ? `${delay}s` : '0s',
       }}
     >
