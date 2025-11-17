@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     minlength: [10, 'Password must be at least 10 characters'],
     validate: {
       validator: function (value) {
-        return /[^A-Za-z0-9]/.test(value); // checks for at least 1 special char
+        return /[^A-Za-z0-9]/.test(value);
       },
       message: 'Password must contain at least one special character'
     }
@@ -32,7 +32,50 @@ const userSchema = new mongoose.Schema({
   bio: {
     type: String,
     maxlength: [200, 'Bio cannot exceed 200 characters'],
-    default: ''
+    default: 'Exploring the mathematical beauty in data...'
+  },
+  // ✨ NEW FIELDS FOR PERSONALIZATION
+  avatar: {
+    char: {
+      type: String,
+      default: 'φ'
+    },
+    charId: {
+      type: Number,
+      default: 1
+    },
+    color: {
+      type: String,
+      default: '#7BA591'
+    }
+  },
+  theme: {
+    id: {
+      type: String,
+      default: 'green'
+    },
+    name: {
+      type: String,
+      default: 'Forest'
+    },
+    color: {
+      type: String,
+      default: '#7BA591'
+    }
+  },
+  stats: {
+    patternsFound: {
+      type: Number,
+      default: 0
+    },
+    daysActive: {
+      type: Number,
+      default: 0
+    },
+    totalUploads: {
+      type: Number,
+      default: 0
+    }
   },
   createdAt: {
     type: Date,

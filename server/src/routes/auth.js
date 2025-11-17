@@ -1,5 +1,11 @@
 import express from 'express';
-import { register, login, getMe } from '../controllers/authController.js';
+import { 
+  register, 
+  login, 
+  getMe,
+  getProfile,      // ✨ NEW
+  updateProfile    // ✨ NEW
+} from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -8,7 +14,9 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login', login);
 
-// Protected route
+// Protected routes
 router.get('/me', protect, getMe);
+router.get('/profile', protect, getProfile);        // ✨ NEW
+router.put('/profile', protect, updateProfile);     // ✨ NEW
 
 export default router;

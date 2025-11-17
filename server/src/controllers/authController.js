@@ -149,7 +149,63 @@ export const login = async (req, res) => {
 // @route   GET /api/auth/me
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // req.user is already populated by the protect middleware
+    res.status(200).json({
+      success: true,
+      user: req.user,
+    });
+
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
+
+// ✨ NEW: Get user profile (same as getMe but keeping separate for clarity)
+// @desc    Get user profile
+// @route   GET /api/auth/profile
+export const getProfile = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      user: req.user,
+    });
+
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
+
+// ✨ NEW: Update user profile
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { username, bio, avatar, theme } = req.body;
+
+    // Build update object
+    const updateData = {};
+    if (username) updateData.username = username;
+    if (bio !== undefined) updateData.bio = bio;
+    if (avatar) updateData.avatar = avatar;
+    if (theme) updateData.theme = theme;
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      updateData,
+      { 
+        new: true, // Return updated document
+        runValidators: true // Run schema validators
+      }
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -160,14 +216,24 @@ export const getMe = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: 'Profile updated successfully ✨',
       user,
     });
 
   } catch (error) {
-    console.error('Get user error:', error);
+    console.error('Update profile error:', error);
+
+    // Handle duplicate username error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username already taken',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: 'Server error during profile update',
     });
   }
 };
