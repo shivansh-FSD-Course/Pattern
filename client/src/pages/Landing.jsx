@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
@@ -31,13 +31,14 @@ export default function Landing() {
   ─────────────────────────────── */
   const mathDecor = useMemo(() => {
     return {
-      glyphs: Array.from({ length: 34 }).map(() => ({
+      glyphs: Array.from({ length: 34 }).map((_, i) => ({
         char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
         left: Math.random() * 100,
         top: Math.random() * 100,
         size: 46 + Math.random() * 65,
         opacity: 0.012 + Math.random() * 0.035,
         rotate: Math.random() * 40 - 20,
+        delay: i * 0.15,
       })),
     };
   }, []);
@@ -55,6 +56,8 @@ export default function Landing() {
               top: `${g.top}%`,
               fontSize: `${g.size}px`,
               opacity: g.opacity,
+              '--rotate': `${g.rotate}deg`,
+              '--delay': `${g.delay}s`,
               transform: `rotate(${g.rotate}deg)`,
             }}
           >
@@ -113,18 +116,21 @@ export default function Landing() {
             icon={<ClockIcon />}
             title="Pattern Discovery"
             desc="AI-powered algorithms detect Fibonacci sequences, exponential growth, sine waves, and hidden correlations."
+            delay={0}
           />
 
           <FeatureCard
             icon={<BarsIcon />}
             title="Visual Transformation"
             desc="Watch your patterns come alive as 3D visualizations—spirals, fractals, galaxies, and organic motion."
+            delay={0.15}
           />
 
           <FeatureCard
             icon={<InfinityIcon />}
             title="Share & Explore"
             desc="Join a community of pattern explorers. Remix findings and contribute knowledge."
+            delay={0.3}
           />
         </div>
 
@@ -151,16 +157,45 @@ export default function Landing() {
 /* ───────────────────────────────
       FEATURE CARD COMPONENT
 ────────────────────────────── */
-function FeatureCard({ icon, title, desc }) {
+function FeatureCard({ icon, title, desc, delay }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
-      className="
+      ref={cardRef}
+      className={`
         feature-card
         p-10 bg-white/60 backdrop-blur-sm rounded-sm
         border border-ink/15
         hover:-translate-y-1 hover:shadow-[0_8px_22px_rgba(0,0,0,0.08)]
-        transition-all duration-300
-      "
+        transition-all duration-700
+        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+      `}
+      style={{
+        transitionDelay: isVisible ? `${delay}s` : '0s',
+      }}
     >
       <div className="mb-6">{icon}</div>
       <h3 className="font-serif text-lg mb-2">{title}</h3>
