@@ -1,5 +1,41 @@
 import mongoose from 'mongoose';
 
+const commentSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  text: {
+    type: String,
+    required: true,
+    maxlength: 1000
+  },
+  mentions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  parentComment: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment',
+    default: null
+  },
+  replies: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment'
+  }],
+  likes: {
+    type: Number,
+    default: 0
+  },
+  likedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
+}, {
+  timestamps: true
+});
+
 const patternSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,16 +56,14 @@ const patternSchema = new mongoose.Schema({
   },
   patternType: {
     type: String,
-    enum: ['bitcoin', 'stock', 'other'],
+    enum: ['bitcoin', 'stock', 'fibonacci', 'golden', 'exponential', 'wave', 'chaos', 'fourier', 'other'],
     default: 'other'
   },
-  // Store the analysis results
   analysisData: {
     patterns: mongoose.Schema.Types.Mixed,
     visualization_data: mongoose.Schema.Types.Mixed,
     insights: [String]
   },
-  // Stats for community display
   likes: {
     type: Number,
     default: 0
@@ -42,17 +76,7 @@ const patternSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  comments: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    text: String,
-    timestamp: {
-      type: Date,
-      default: Date.now
-    }
-  }]
+  comments: [commentSchema]
 }, {
   timestamps: true
 });

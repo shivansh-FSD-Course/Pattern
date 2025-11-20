@@ -5,7 +5,10 @@ import {
   analyzePattern, 
   publishPattern, 
   getCommunityPatterns,
-  likePattern 
+  likePattern,
+  addComment,      // ← NEW
+  deleteComment,   // ← NEW
+  likeComment      // ← NEW
 } from '../controllers/patternController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -24,7 +27,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
       cb(null, true);
@@ -34,16 +37,15 @@ const upload = multer({
   }
 });
 
-// POST /api/patterns/analyze - Analyze CSV
+// Pattern routes
 router.post('/analyze', protect, upload.single('file'), analyzePattern);
-
-// POST /api/patterns/publish - Publish to community
 router.post('/publish', protect, publishPattern);
-
-// GET /api/patterns/community - Get all patterns
 router.get('/community', getCommunityPatterns);
-
-// POST /api/patterns/:patternId/like - Like/unlike pattern
 router.post('/:patternId/like', protect, likePattern);
+
+// Comment routes
+router.post('/:patternId/comments', protect, addComment);           // ← NEW
+router.delete('/:patternId/comments/:commentId', protect, deleteComment); // ← NEW
+router.post('/:patternId/comments/:commentId/like', protect, likeComment); // ← NEW
 
 export default router;

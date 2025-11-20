@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import api from "../api/axios";
 import PatternVisualization from "../components/PatternVisualization";
-
+import CommentSection from '../components/CommentSection';
 const GLYPHS = ["φ","π","∑","∞","ψ","∂","√","≡","∫","λ"];
 
 // Pattern type configurations
@@ -664,28 +664,15 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </div>
       )}
 
-      {/* Comments Section */}
-      {isExpanded && post.comments.length > 0 && (
-        <div className="mt-4 space-y-3" onClick={(e) => e.stopPropagation()}>
-          <h4 className="font-serif text-lg">Comments</h4>
-          {post.comments.map((comment, idx) => (
-            <div key={idx} className="flex gap-3 p-3 bg-white/50 rounded-sm">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center font-serif text-sm flex-shrink-0"
-                style={{ backgroundColor: comment.avatar.color }}
-              >
-                {comment.avatar.char}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-sm">@{comment.user}</span>
-                  <span className="text-xs opacity-40">{comment.timestamp}</span>
-                </div>
-                <p className="text-sm opacity-75">{comment.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* NEW COMMENT SECTION */}
+      {isExpanded && (
+        <CommentSection
+          patternId={post.id}
+          comments={post.comments}
+          onCommentAdded={() => {
+            window.location.reload();
+          }}
+        /> 
       )}
     </div>
   );
