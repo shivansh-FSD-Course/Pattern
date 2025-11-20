@@ -67,9 +67,9 @@ export default function Login() {
     []
   );
 
-  /* ───────────────────────────────
+  /* 
         RIPPLE EFFECT FOR BUTTON
-  ─────────────────────────────── */
+   */
   const createRipple = (e) => {
     const button = e.currentTarget;
     const rect = button.getBoundingClientRect();
@@ -91,9 +91,9 @@ export default function Login() {
     }, 600);
   };
 
-  /* ───────────────────────────────
+  /* 
         LOGIN SUBMIT HANDLER
-  ─────────────────────────────── */
+   */
   async function handleLogin(e) {
     e.preventDefault();
     setErrorMsg("");
@@ -130,9 +130,9 @@ export default function Login() {
       className="relative w-full min-h-screen bg-paper text-ink flex items-center justify-center overflow-hidden"
       onMouseMove={handleMouseMove}
     >
-      {/* ───────────────────────────────
+      {/* 
           CURSOR TRAIL
-      ─────────────────────────────── */}
+       */}
       {trails.map(trail => (
         <span
           key={trail.id}
@@ -147,9 +147,9 @@ export default function Login() {
         </span>
       ))}
 
-      {/* ───────────────────────────────
+      {/* 
           FLOATING BACKGROUND DECORATION WITH PARALLAX
-      ─────────────────────────────── */}
+       */}
       <div className="absolute inset-0 pointer-events-none">
         {decor.map((g, i) => (
           <span
@@ -170,9 +170,9 @@ export default function Login() {
         ))}
       </div>
 
-      {/* ───────────────────────────────
+      {/* 
           LOGIN CARD DESIGN WITH FADE-IN
-      ─────────────────────────────── */}
+       */}
       <div
         className={`
           relative z-10 w-[380px]
@@ -312,9 +312,9 @@ export default function Login() {
   );
 }
 
-/* ───────────────────────────────
+/*
       EYE ICONS FOR PASSWORD TOGGLE
-────────────────────────────── */
+*/
 const EyeIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

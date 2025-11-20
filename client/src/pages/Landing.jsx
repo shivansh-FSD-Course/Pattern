@@ -47,9 +47,9 @@ export default function Landing() {
     }
   };
 
-  /* ───────────────────────────────
+  /* 
       RANDOM BACKGROUND ELEMENTS
-  ─────────────────────────────── */
+  */
   const mathDecor = useMemo(() => {
     return {
       glyphs: Array.from({ length: 34 }).map((_, i) => ({
@@ -201,9 +201,9 @@ export default function Landing() {
   );
 }
 
-/* ───────────────────────────────
+/* 
       STATS COUNTER COMPONENT
-────────────────────────────── */
+ */
 function StatCounter({ end, label }) {
   const [count, setCount] = useState(0);
   const counterRef = useRef(null);
@@ -255,9 +255,9 @@ function StatCounter({ end, label }) {
   );
 }
 
-/* ───────────────────────────────
+/* 
       FEATURE CARD COMPONENT
-────────────────────────────── */
+ */
 function FeatureCard({ icon, title, desc, delay }) {
   const [isVisible, setIsVisible] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -320,9 +320,9 @@ function FeatureCard({ icon, title, desc, delay }) {
   );
 }
 
-/* ───────────────────────────────
+/* 
       INLINE SVG ICONS
-────────────────────────────── */
+ */
 const ClockIcon = () => (
   <svg width="38" height="38" stroke="#7BA591" fill="none" strokeWidth="2">
     <circle cx="19" cy="19" r="16" />

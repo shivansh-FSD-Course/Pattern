@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
+import api from "../api/axios";
+import PatternVisualization from "../components/PatternVisualization";
 
 const GLYPHS = ["φ","π","∑","∞","ψ","∂","√","≡","∫","λ"];
 
@@ -10,6 +12,9 @@ const PATTERN_TYPES = {
   wave: { label: "Sine Wave", color: "#5C8BB8", icon: "〰️" },
   chaos: { label: "Chaos", color: "#8B7BA8", icon: "🌪️" },
   fourier: { label: "Fourier", color: "#5CB88B", icon: "📊" },
+  bitcoin: { label: "Bitcoin", color: "#F7931A", icon: "₿" },
+  stock: { label: "Stock Market", color: "#5C8BB8", icon: "📈" },
+  other: { label: "Other", color: "#7BA591", icon: "✨" },
 };
 
 // User badges
@@ -18,6 +23,32 @@ const USER_BADGES = {
   golden_eye: { name: "Golden Eye", icon: "👁️" },
   pattern_hunter: { name: "Pattern Hunter", icon: "🎯" },
   first_discovery: { name: "First Discovery", icon: "🌟" },
+};
+
+// Helper function to get time ago
+const getTimeAgo = (date) => {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+  return new Date(date).toLocaleDateString();
+};
+
+// Helper function to get pattern thumbnail
+const getPatternThumbnail = (type) => {
+  const thumbnails = {
+    bitcoin: '₿',
+    stock: '📈',
+    fibonacci: '🌀',
+    golden: '✨',
+    exponential: '🔺',
+    wave: '〰️',
+    chaos: '🌪️',
+    fourier: '📊',
+    other: '✨'
+  };
+  return thumbnails[type] || '✨';
 };
 
 export default function Community() {
@@ -29,66 +60,8 @@ export default function Community() {
   const [sortBy, setSortBy] = useState("recent");
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [expandedPost, setExpandedPost] = useState(null);
-
-  // Sample posts data
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      username: "math_wizard",
-      avatar: { char: "φ", color: "#7BA591" },
-      badges: ["fibonacci_master", "pattern_hunter"],
-      title: "Chaos Patterns in Logistic Maps",
-      content: "Exploring how r > 3.57 leads to chaotic oscillations. The bifurcation diagram reveals fascinating self-similar structures at every scale.",
-      patternType: "chaos",
-      timestamp: "2 hours ago",
-      views: 247,
-      likes: 34,
-      thumbnail: "🌪️",
-      comments: [
-        { user: "sigma_guy", avatar: { char: "∑", color: "#5C8BB8" }, text: "Bro this is insane 🔥", timestamp: "1 hour ago" },
-        { user: "fractalgirl", avatar: { char: "∞", color: "#8B7BA8" }, text: "Love this visualization!", timestamp: "45 min ago" }
-      ],
-      isLiked: false,
-      isSaved: false,
-    },
-    {
-      id: 2,
-      username: "neural_goat",
-      avatar: { char: "ψ", color: "#B85C5C" },
-      badges: ["golden_eye"],
-      title: "Fourier Transform of Bird Sounds",
-      content: "Just converted a sparrow sound into a frequency map. The harmonics show perfect golden ratio relationships!",
-      patternType: "fourier",
-      timestamp: "5 hours ago",
-      views: 189,
-      likes: 28,
-      thumbnail: "📊",
-      comments: [
-        { user: "mathmage", avatar: { char: "λ", color: "#C9A961" }, text: "This is so PatternCraft-coded.", timestamp: "3 hours ago" }
-      ],
-      isLiked: true,
-      isSaved: false,
-    },
-    {
-      id: 3,
-      username: "spiral_queen",
-      avatar: { char: "∫", color: "#5CB88B" },
-      badges: ["fibonacci_master", "first_discovery"],
-      title: "Fibonacci Spirals in Sunflower Seeds",
-      content: "Analyzed 500+ sunflower seed arrangements. Every single one follows the golden angle of 137.5°!",
-      patternType: "fibonacci",
-      timestamp: "1 day ago",
-      views: 421,
-      likes: 67,
-      thumbnail: "🌻",
-      comments: [
-        { user: "bio_nerd", avatar: { char: "√", color: "#7BA591" }, text: "Nature is the ultimate mathematician", timestamp: "12 hours ago" },
-        { user: "math_wizard", avatar: { char: "φ", color: "#7BA591" }, text: "Amazing work! Have you tried sunflowers at different latitudes?", timestamp: "8 hours ago" }
-      ],
-      isLiked: false,
-      isSaved: true,
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Live activity feed
   const [activities] = useState([
@@ -97,6 +70,49 @@ export default function Community() {
     { user: "chaos_king", action: "liked", pattern: "Chaos Pattern", time: "5 min ago" },
     { user: "fib_fan", action: "commented on", pattern: "Fibonacci", time: "8 min ago" },
   ]);
+
+  /* 
+      FETCH PATTERNS FROM API
+  */
+  useEffect(() => {
+    const fetchPatterns = async () => {
+      try {
+        const response = await api.get('/patterns/community');
+        if (response.data.success) {
+          // Transform the data to match our post structure
+          const transformedPosts = response.data.patterns.map(pattern => ({
+            id: pattern._id,
+            username: pattern.user.username,
+            avatar: pattern.user.avatar || { char: "φ", color: "#7BA591" },
+            badges: [], // Can add badges based on user achievements later
+            title: pattern.title,
+            content: pattern.caption || "Check out this amazing pattern discovery!",
+            patternType: pattern.patternType || 'other',
+            timestamp: getTimeAgo(pattern.createdAt),
+            views: pattern.views,
+            likes: pattern.likes,
+            thumbnail: getPatternThumbnail(pattern.patternType),
+            comments: pattern.comments.map(c => ({
+              user: c.user?.username || 'Anonymous',
+              avatar: c.user?.avatar || { char: "λ", color: "#5C8BB8" },
+              text: c.text,
+              timestamp: getTimeAgo(c.timestamp)
+            })),
+            isLiked: false, // TODO: Check if current user liked it
+            isSaved: false,
+            analysisData: pattern.analysisData
+          }));
+          setPosts(transformedPosts);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch patterns:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchPatterns();
+  }, []);
 
   /* Mount animation trigger */
   useEffect(() => {
@@ -123,12 +139,27 @@ export default function Community() {
   };
 
   /* Like post */
-  const handleLike = (postId) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, likes: post.isLiked ? post.likes - 1 : post.likes + 1, isLiked: !post.isLiked }
-        : post
-    ));
+  const handleLike = async (postId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await api.post(`/patterns/${postId}/like`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        setPosts(posts.map(post => 
+          post.id === postId 
+            ? { 
+                ...post, 
+                likes: response.data.likes, 
+                isLiked: response.data.isLiked 
+              }
+            : post
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
   };
 
   /* Save post */
@@ -155,9 +186,9 @@ export default function Community() {
       return 0;
     });
 
-  /* ──────────────────────────────────────────────
+  /* 
       FLOATING GLYPH BACKGROUND
-  ────────────────────────────────────────────── */
+  */
   const mathGlyphs = useMemo(
     () =>
       Array.from({ length: 26 }).map((_, i) => ({
@@ -305,8 +336,16 @@ export default function Community() {
             <p className="text-sm opacity-60">Upload a dataset or visualization</p>
           </button>
 
+          {/* LOADING STATE */}
+          {loading && (
+            <div className="text-center py-20">
+              <div className="text-5xl mb-3 animate-pulse">⚡</div>
+              <p className="font-serif text-lg">Loading patterns...</p>
+            </div>
+          )}
+
           {/* POSTS */}
-          {filteredPosts.map((post, index) => (
+          {!loading && filteredPosts.map((post, index) => (
             <PostCard
               key={post.id}
               post={post}
@@ -318,11 +357,17 @@ export default function Community() {
             />
           ))}
 
-          {filteredPosts.length === 0 && (
+          {/* NO RESULTS */}
+          {!loading && filteredPosts.length === 0 && (
             <div className="text-center py-20 opacity-60">
               <div className="text-5xl mb-3">🔍</div>
               <p className="font-serif text-lg">No patterns found</p>
-              <p className="text-sm">Try adjusting your search or filters</p>
+              <p className="text-sm">
+                {posts.length === 0 
+                  ? "Be the first to share a pattern discovery!" 
+                  : "Try adjusting your search or filters"
+                }
+              </p>
             </div>
           )}
         </div>
@@ -390,9 +435,9 @@ export default function Community() {
           >
             <h3 className="font-serif text-[22px] mb-4">Trending 🔥</h3>
             <div className="space-y-3">
-              <TrendingItem title="Chaos Theory" count="142" />
-              <TrendingItem title="Golden Ratio" count="98" />
-              <TrendingItem title="Fractals" count="87" />
+              <TrendingItem title="Bitcoin Analysis" count={posts.filter(p => p.patternType === 'bitcoin').length} />
+              <TrendingItem title="Golden Ratio" count={posts.filter(p => p.patternType === 'golden').length} />
+              <TrendingItem title="Fibonacci" count={posts.filter(p => p.patternType === 'fibonacci').length} />
             </div>
           </div>
         </div>
@@ -406,9 +451,9 @@ export default function Community() {
   );
 }
 
-/* ───────────────────────────────
+/* 
       POST CARD COMPONENT
-────────────────────────────── */
+ */
 function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
   const [isVisible, setIsVisible] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -448,7 +493,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
     setTilt({ x: 0, y: 0 });
   };
 
-  const patternType = PATTERN_TYPES[post.patternType];
+  const patternType = PATTERN_TYPES[post.patternType] || PATTERN_TYPES.other;
 
   return (
     <div
@@ -484,13 +529,13 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
             <div className="flex items-center gap-2">
               <span className="font-medium">@{post.username}</span>
               {/* Badges */}
-              {post.badges.map(badgeKey => (
+              {post.badges && post.badges.map(badgeKey => (
                 <span 
                   key={badgeKey}
                   className="text-sm"
-                  title={USER_BADGES[badgeKey].name}
+                  title={USER_BADGES[badgeKey]?.name}
                 >
-                  {USER_BADGES[badgeKey].icon}
+                  {USER_BADGES[badgeKey]?.icon}
                 </span>
               ))}
             </div>
@@ -508,10 +553,12 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </span>
       </div>
 
-      {/* Thumbnail Preview */}
-      <div className="text-6xl text-center mb-4 py-6 bg-white/40 rounded-sm">
-        {post.thumbnail}
-      </div>
+      {/* Thumbnail Preview - Only show if NOT expanded */}
+      {!isExpanded && (
+        <div className="text-6xl text-center mb-4 py-6 bg-white/40 rounded-sm">
+          {post.thumbnail}
+        </div>
+      )}
 
       {/* Title */}
       <h2 className="font-serif text-[24px] mb-2">
@@ -523,6 +570,27 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         {post.content}
       </p>
 
+      {/* SHOW INSIGHTS IF EXPANDED */}
+      {isExpanded && post.analysisData && post.analysisData.insights && (
+        <div className="mb-4 p-4 bg-gradient-to-r from-accent-green/10 to-accent-gold/10 rounded-sm border border-ink/10" onClick={(e) => e.stopPropagation()}>
+          <h4 className="font-serif text-lg mb-3 flex items-center gap-2">
+            <span>🔍</span> Key Discoveries
+          </h4>
+          <div className="space-y-2">
+            {post.analysisData.insights.map((insight, i) => (
+              <p key={i} className="text-sm leading-relaxed">{insight}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* SHOW VISUALIZATION IF EXPANDED AND HAS DATA */}
+      {isExpanded && post.analysisData && post.analysisData.visualization_data && (
+        <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+          <PatternVisualization data={post.analysisData} />
+        </div>
+      )}
+
       {/* Stats */}
       <div className="flex items-center gap-4 text-sm opacity-60 mb-4">
         <span className="flex items-center gap-1">
@@ -531,6 +599,11 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         <span className="flex items-center gap-1">
           <CommentIcon /> {post.comments.length}
         </span>
+        {isExpanded ? (
+          <span className="text-xs ml-auto">👆 Click to collapse</span>
+        ) : (
+          <span className="text-xs ml-auto">👆 Click to expand & view visualization</span>
+        )}
       </div>
 
       {/* Actions */}
@@ -592,7 +665,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
       )}
 
       {/* Comments Section */}
-      {isExpanded && (
+      {isExpanded && post.comments.length > 0 && (
         <div className="mt-4 space-y-3" onClick={(e) => e.stopPropagation()}>
           <h4 className="font-serif text-lg">Comments</h4>
           {post.comments.map((comment, idx) => (
@@ -618,9 +691,9 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
   );
 }
 
-/* ───────────────────────────────
+/* 
       TRENDING ITEM COMPONENT
-────────────────────────────── */
+*/
 function TrendingItem({ title, count }) {
   return (
     <div className="flex items-center justify-between hover:bg-white/50 p-2 rounded transition">
@@ -630,9 +703,9 @@ function TrendingItem({ title, count }) {
   );
 }
 
-/* ───────────────────────────────
+/*
       CREATE POST MODAL
-────────────────────────────── */
+*/
 function CreatePostModal({ onClose }) {
   return (
     <div
@@ -656,68 +729,27 @@ function CreatePostModal({ onClose }) {
           Share Your Discovery
         </h3>
 
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Title"
-            className="
-              w-full px-4 py-3 border border-ink/25 rounded-sm
-              bg-white/70 outline-none focus:border-ink
-            "
-          />
+        <p className="text-center text-sm opacity-60 mb-6">
+          Go to Dashboard to upload and analyze a dataset, then publish it to the community!
+        </p>
 
-          <textarea
-            placeholder="Describe your pattern discovery..."
-            className="
-              w-full h-32 resize-none px-4 py-3 border border-ink/25
-              outline-none bg-white/70 rounded-sm focus:border-ink
-            "
-          />
-
-          <select className="
-            w-full px-4 py-3 border border-ink/25 rounded-sm
-            bg-white/70 outline-none focus:border-ink
-          ">
-            <option>Select Pattern Type</option>
-            {Object.entries(PATTERN_TYPES).map(([key, type]) => (
-              <option key={key} value={key}>{type.icon} {type.label}</option>
-            ))}
-          </select>
-
-          <div className="border-2 border-dashed border-ink/25 rounded-sm p-8 text-center hover:border-ink/40 transition cursor-pointer">
-            <UploadIcon className="mx-auto mb-2" />
-            <p className="text-sm opacity-60">Upload visualization or dataset</p>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="
-              px-6 py-2 rounded-sm text-sm border border-ink/30
-              hover:bg-ink/5 transition
-            "
-          >
-            Cancel
-          </button>
-
-          <button
-            className="
-              border border-ink px-6 py-2 rounded-sm text-sm
-              hover:bg-ink hover:text-paper transition
-            "
-          >
-            Publish
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className="
+            w-full border border-ink px-6 py-3 rounded-sm text-sm
+            hover:bg-ink hover:text-paper transition
+          "
+        >
+          Got it!
+        </button>
       </div>
     </div>
   );
 }
 
-/* ───────────────────────────────
+/* 
       ICON COMPONENTS
-────────────────────────────── */
+*/
 const SearchIcon = ({ className }) => (
   <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="8" />

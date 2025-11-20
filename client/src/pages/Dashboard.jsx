@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import api from "../api/axios";
+import PatternVisualization from "../components/PatternVisualization";
 
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
@@ -53,6 +54,12 @@ export default function Dashboard() {
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
 
+  // Pattern analysis state
+  const [analyzedData, setAnalyzedData] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [showVisualization, setShowVisualization] = useState(false);
+  const [patternTitle, setPatternTitle] = useState(""); // ← MOVED INSIDE!
+
   // Sample collection data
   const [myCollection] = useState([
     { id: 1, title: "Sales Growth Pattern", type: "Exponential", date: "2024-03-15", thumbnail: "🔺" },
@@ -68,9 +75,9 @@ export default function Dashboard() {
     totalUploads: 12,
   };
 
-  /* ───────────────────────────────
+  /* 
       LOAD PROFILE ON MOUNT
-  ─────────────────────────────── */
+   */
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -84,18 +91,15 @@ export default function Dashboard() {
         if (res.data.success) {
           const user = res.data.user;
           
-          // Load basic info
           setUsername(user.username || "PatternSeeker");
           setBio(user.bio || "Exploring the mathematical beauty in data...");
           
-          // Load avatar
           if (user.avatar) {
             const avatarChar = AVATAR_CHARS.find(a => a.id === user.avatar.charId);
             if (avatarChar) setSelectedAvatar(avatarChar);
             if (user.avatar.color) setAvatarColor(user.avatar.color);
           }
           
-          // Load theme
           if (user.theme) {
             const userTheme = THEMES.find(t => t.id === user.theme.id);
             if (userTheme) setTheme(userTheme);
@@ -109,9 +113,9 @@ export default function Dashboard() {
     loadProfile();
   }, []);
 
-  /* ───────────────────────────────
+  /* 
       SAVE PROFILE FUNCTION
-  ─────────────────────────────── */
+   */
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -141,9 +145,9 @@ export default function Dashboard() {
     }
   };
 
-  /* ───────────────────────────────
+  /* 
       SAVE AVATAR AND CLOSE MODAL
-  ─────────────────────────────── */
+   */
   const handleAvatarSave = async () => {
     setShowAvatarModal(false);
     await handleSaveProfile();
@@ -173,13 +177,40 @@ export default function Dashboard() {
     setTrails(prev => [...prev.slice(-15), newTrail]);
   };
 
-  /* File upload handler */
-  function handleFileUpload(e) {
+  /* 
+      FILE UPLOAD & ANALYSIS
+ */
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setUploadedFile(file);
+    if (!file) return;
+
+    setAnalyzing(true);
+    setUploadedFile(file);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await api.post('/patterns/analyze', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        setAnalyzedData(response.data.data);
+        setShowVisualization(true);
+        setAnalyzing(false);
+      }
+
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      alert(error.response?.data?.message || 'Failed to analyze dataset');
+      setAnalyzing(false);
     }
-  }
+  };
 
   /* Drag and drop handlers */
   const handleDragOver = (e) => {
@@ -192,19 +223,78 @@ export default function Dashboard() {
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
     
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith('.csv')) {
       setUploadedFile(file);
+      setAnalyzing(true);
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const token = localStorage.getItem('token');
+        const response = await api.post('/patterns/analyze', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.data.success) {
+          setAnalyzedData(response.data.data);
+          setShowVisualization(true);
+          setAnalyzing(false);
+        }
+
+      } catch (error) {
+        console.error('Analysis failed:', error);
+        alert(error.response?.data?.message || 'Failed to analyze dataset');
+        setAnalyzing(false);
+      }
     }
   };
 
-  /* ───────────────────────────────
+  /* 
+      PUBLISH HANDLER
+  */
+  const handlePublish = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await api.post('/patterns/publish', {
+        title: patternTitle || uploadedFile.name.replace('.csv', ''),
+        caption: caption,
+        datasetName: uploadedFile.name,
+        patternType: analyzedData.dataset_type || 'other',
+        analysisData: {
+          patterns: analyzedData.patterns,
+          visualization_data: analyzedData.visualization_data,
+          insights: analyzedData.insights
+        }
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('Pattern published to community! 🎉');
+        setShowPublishModal(false);
+        setCaption("");
+        setPatternTitle("");
+      }
+
+    } catch (error) {
+      console.error('Publish failed:', error);
+      alert(error.response?.data?.message || 'Failed to publish pattern');
+    }
+  };
+
+  /* 
       FLOATING GLYPH BACKGROUND
-  ─────────────────────────────── */
+   */
   const glyphs = useMemo(
     () =>
       Array.from({ length: 30 }).map((_, i) => ({
@@ -462,7 +552,17 @@ export default function Dashboard() {
               </label>
             </div>
 
-            {uploadedFile && (
+            {/* ANALYZING STATE */}
+            {analyzing && (
+              <div className="mt-6 p-6 bg-white/70 rounded-sm border border-ink/15 text-center">
+                <div className="text-4xl mb-3 animate-pulse">⚡</div>
+                <p className="text-lg font-serif mb-1">Analyzing patterns...</p>
+                <p className="text-xs opacity-60">Detecting Fibonacci levels, golden ratios, and market cycles</p>
+              </div>
+            )}
+
+            {/* FILE UPLOADED */}
+            {uploadedFile && !analyzing && !showVisualization && (
               <div className="mt-6 p-4 bg-white/70 rounded-sm border border-ink/15">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -472,19 +572,58 @@ export default function Dashboard() {
                       <p className="text-xs opacity-60">Ready to analyze</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowPublishModal(true)}
-                    className="
-                      border border-ink rounded-sm px-6 py-2 text-sm
-                      hover:bg-ink hover:text-paper transition
-                    "
-                  >
-                    Analyze & Publish
-                  </button>
                 </div>
               </div>
             )}
           </div>
+
+          {/* VISUALIZATION RESULTS */}
+          {showVisualization && analyzedData && (
+            <div className="mt-8 bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15 shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6">
+              <h2 className="font-serif text-[32px] mb-6">Pattern Analysis Results</h2>
+              
+              {/* Insights Panel */}
+              <div className="bg-gradient-to-r from-accent-green/10 to-accent-gold/10 p-6 rounded-sm mb-6 border border-ink/10">
+                <h3 className="font-serif text-xl mb-4 flex items-center gap-2">
+                  <span>🔍</span> Key Discoveries
+                </h3>
+                <div className="space-y-2">
+                  {analyzedData.insights.map((insight, i) => (
+                    <p key={i} className="text-sm leading-relaxed">{insight}</p>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3D Visualization */}
+              <PatternVisualization data={analyzedData} />
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => setShowPublishModal(true)}
+                  className="
+                    flex-1 border border-ink rounded-sm px-6 py-3 text-sm font-medium
+                    hover:bg-ink hover:text-paper transition
+                  "
+                >
+                  📤 Publish to Community
+                </button>
+                <button
+                  onClick={() => {
+                    setShowVisualization(false);
+                    setAnalyzedData(null);
+                    setUploadedFile(null);
+                  }}
+                  className="
+                    border border-ink/30 rounded-sm px-6 py-3 text-sm
+                    hover:bg-ink/5 transition
+                  "
+                >
+                  Upload Another Dataset
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* MY COLLECTION */}
@@ -640,9 +779,22 @@ export default function Dashboard() {
 
             <div className="mb-4 p-4 bg-white/70 rounded-sm">
               <p className="text-sm font-semibold mb-1">📊 {uploadedFile?.name}</p>
-              <p className="text-xs opacity-60">Analyzing patterns...</p>
+              <p className="text-xs opacity-60">Pattern analysis complete!</p>
             </div>
 
+            {/* Title Input */}
+            <input
+              type="text"
+              className="
+                w-full border border-ink/25 rounded-sm px-3 py-2 mb-3
+                bg-white/70 outline-none focus:border-ink
+              "
+              placeholder="Give your discovery a title..."
+              value={patternTitle}
+              onChange={(e) => setPatternTitle(e.target.value)}
+            />
+
+            {/* Caption Input */}
             <textarea
               className="
                 w-full h-24 border border-ink/25 rounded-sm px-3 py-2 resize-none
@@ -665,6 +817,7 @@ export default function Dashboard() {
               </button>
 
               <button
+                onClick={handlePublish}
                 className="
                   border border-ink px-6 py-2 rounded-sm text-sm
                   hover:bg-ink hover:text-paper transition
@@ -681,9 +834,9 @@ export default function Dashboard() {
   );
 }
 
-/* ───────────────────────────────
+/* 
       STAT CARD COMPONENT
-────────────────────────────── */
+ */
 function StatCard({ value, label }) {
   const [count, setCount] = useState(0);
   const cardRef = React.useRef(null);
@@ -735,9 +888,9 @@ function StatCard({ value, label }) {
   );
 }
 
-/* ───────────────────────────────
+/* 
       COLLECTION CARD COMPONENT
-────────────────────────────── */
+ */
 function CollectionCard({ item, delay }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -804,9 +957,9 @@ function CollectionCard({ item, delay }) {
   );
 }
 
-/* ───────────────────────────────
+/* 
       ICON COMPONENTS
-────────────────────────────── */
+ */
 const EditIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

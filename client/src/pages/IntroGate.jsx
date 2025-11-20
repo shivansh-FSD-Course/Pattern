@@ -10,48 +10,7 @@ export default function IntroGate({ onEnter }) {
 
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center bg-paper text-ink overflow-hidden">
-    {/* FLOATING BACKGROUND MATH DECOR */}
-    <div className="absolute inset-0 pointer-events-none opacity-[0.09]">
-
-      {/* BIG CENTER SPIRAL */}
-      <svg
-        viewBox="0 0 400 400"
-        className="absolute left-[14%] top-[22%] w-[520px] math-float"
-        fill="none"
-        stroke="#2C2C2C"
-        strokeWidth="1.2"
-        opacity="0.10"
-      >
-        <path d="M200 200 Q200 120 280 120 Q360 120 360 200 Q360 300 240 300 Q90 300 90 160 Q90 40 260 40" />
-      </svg>
-
-      {/* SMALLER SPIRAL RIGHT */}
-      <svg
-        viewBox="0 0 400 400"
-        className="absolute right-[12%] bottom-[14%] w-[320px] math-float"
-        fill="none"
-        stroke="#2C2C2C"
-        strokeWidth="1"
-        opacity="0.08"
-      >
-        <path d="M200 200 Q200 150 250 150 Q300 150 300 200 Q300 260 230 260 Q130 260 130 170" />
-      </svg>
-
-      {/* SYMBOLS */}
-      <span className="absolute left-[18%] top-[48%] text-[58px] opacity-[0.08] font-serif math-float">
-        φ
-      </span>
-      <span className="absolute right-[14%] top-[30%] text-[70px] opacity-[0.07] font-serif math-float">
-        π
-      </span>
-      <span className="absolute left-[48%] top-[18%] text-[52px] opacity-[0.07] font-serif math-float">
-        ∞
-      </span>
-      <span className="absolute right-[30%] bottom-[18%] text-[65px] opacity-[0.07] font-serif math-float">
-        Σ
-      </span>
-    </div>
-
+    
       {/*
           ✧ FLOATING MATHEMATICAL FIELD 
      */}
@@ -106,9 +65,9 @@ export default function IntroGate({ onEnter }) {
         ))}
       </div>
 
-      {/* ─────────────────────────────────────────────
+      {/* 
           ✧ HANDWRITTEN SVG LOGO
-      ───────────────────────────────────────────── */}
+      */}
       <svg
         width="720"
         height="130"
@@ -145,9 +104,9 @@ export default function IntroGate({ onEnter }) {
         Where numbers become art
       </p>
 
-      {/* ─────────────────────────────────────────────
-          ✧ PREMIUM ENTER BUTTON
-      ───────────────────────────────────────────── */}
+      {/* 
+          ENTER BUTTON
+      */}
       <button
         onClick={handleEnter}
         className={`
