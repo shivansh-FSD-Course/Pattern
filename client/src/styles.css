@@ -1,22 +1,22 @@
-/* ---------------------------------------------------
+/* 
    FONTS
---------------------------------------------------- */
+ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Crimson+Pro:wght@300;400;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
 
 
-/* ---------------------------------------------------
+/* 
    TAILWIND
---------------------------------------------------- */
+ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
-/* ---------------------------------------------------
+/*
    GLOBAL PAPER AESTHETIC
---------------------------------------------------- */
+ */
 body {
   @apply bg-paper font-sans text-ink;
   background: linear-gradient(135deg, #FDFBF7 0%, #F8F6F0 100%);
@@ -35,9 +35,9 @@ body::before {
   );
 }
 
-/* =====================================================================
+/* 
     INTRO PAGE ANIMATIONS
-===================================================================== */
+ */
 .pc-write { animation: pcWrite 11s ease-out forwards; }
 
 @keyframes pcWrite {
@@ -51,9 +51,9 @@ body::before {
   100% { opacity: 0; }
 }
 
-/* =====================================================================
-    UNIVERSAL FLOATING MATH BACKGROUND (UPDATED WITH PARALLAX)
-===================================================================== */
+/* 
+    UNIVERSAL FLOATING MATH BACKGROUND 
+ */
 @keyframes floatSoft {
   0%,100% { 
     transform: translateY(0px) rotate(var(--rotate, 0deg)); 
@@ -85,9 +85,9 @@ body::before {
   animation: trail-fade 1.5s ease-out forwards;
 }
 
-/* =====================================================================
+/* 
      LANDING PAGE SPIRAL ANIMATIONS
-===================================================================== */
+ */
 @keyframes spiralDraw { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
 @keyframes spiralRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
@@ -106,9 +106,9 @@ body::before {
   animation: floatSoft 9s ease-in-out infinite;
 }
 
-/* =====================================================================
+/* 
      FEATURE CARDS
-===================================================================== */
+ */
 .card-hover {
   transition: transform .35s ease, box-shadow .35s ease;
 }
@@ -117,7 +117,7 @@ body::before {
   box-shadow: 0 14px 32px rgba(0,0,0,0.14);
 }
 
-/* → Left vertical shine border */
+/* Left vertical shine border */
 .feature-card {
   position: relative;
   overflow: hidden;
@@ -136,9 +136,9 @@ body::before {
   height:100%;
 }
 
-/* =====================================================================
+/* 
      BORDER INK DRAW
-===================================================================== */
+*/
 .ink-border {
   position: absolute;
   inset: 0;
@@ -152,9 +152,9 @@ body::before {
   100% { opacity: 1; clip-path: inset(0 0 0 0); }
 }
 
-/* =====================================================================
+/* 
      CTA BUTTON ARROW REVEAL
-===================================================================== */
+*/
 button .cta-arrow {
   opacity: 0;
   transform: translateX(-4px);
@@ -166,11 +166,10 @@ button:hover .cta-arrow {
 }
 
 
-/* =====================================================================
-     NEW LANDING PAGE DESIGN RULES
-===================================================================== */
+/* 
+     LANDING PAGE LOGIC/RULES
+ */
 
-/*  Thin underline below PATTERNCRAFT ADDED */
 .header-underline {
   width: 100%;
   height: 1px;
@@ -178,7 +177,7 @@ button:hover .cta-arrow {
   margin: 0.6rem 0 2.3rem 0;
 }
 
-/* Big serif hero title ADDED */
+/* Big serif hero title  */
 .hero-title {
   font-family: "Crimson Pro", serif;
   font-size: clamp(42px, 5vw, 70px);
@@ -186,7 +185,7 @@ button:hover .cta-arrow {
   letter-spacing: -0.8px;
 }
 
-/* Hero subtitle text ADDED */
+/* Hero subtitle text */
 .hero-sub {
   max-width: 520px;
   font-size: 17px;
@@ -194,7 +193,7 @@ button:hover .cta-arrow {
   line-height: 1.55;
 }
 
-/* Primary CTA button like mockup ADDED */
+/* Primary CTA button  */
 .btn-primary {
   background: #1b1b1b;
   color: #fafafa;
@@ -218,7 +217,7 @@ button:hover .cta-arrow {
   background: #1b1b1b;
   color: white;
 }
-/* ✦ LOGIN PAGE ANIMATIONS */
+/* LOGIN PAGE ANIMATIONS */
 
 /* Ripple effect */
 @keyframes ripple {
@@ -294,7 +293,7 @@ button:hover .cta-arrow {
   animation: slide-down 0.3s ease-out;
 }
 
-/* Line clamp for text truncation */
+/* Line clamp for text modification */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
