@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import authRoutes from './routes/auth.js';
+import patternRoutes from './routes/patterns.js';
 
 dotenv.config();
 
@@ -14,8 +15,10 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// ✨ INCREASE LIMITS HERE ✨
+app.use(express.json({ limit: '50mb' }));  // ← Changed from default 100kb
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // ← Added limit
 
 // Routes
 app.get('/api/health', (req, res) => {
@@ -23,6 +26,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/patterns', patternRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
