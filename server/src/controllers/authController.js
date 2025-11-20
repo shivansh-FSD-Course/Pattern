@@ -108,7 +108,7 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials ⚠️',
+        message: 'Invalid credentials ',
       });
     }
 
@@ -118,7 +118,7 @@ export const login = async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials ⚠️',
+        message: 'Invalid credentials ',
       });
     }
 
@@ -163,8 +163,6 @@ export const getMe = async (req, res) => {
     });
   }
 };
-
-// ✨ NEW: Get user profile (same as getMe but keeping separate for clarity)
 // @desc    Get user profile
 // @route   GET /api/auth/profile
 export const getProfile = async (req, res) => {

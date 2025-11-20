@@ -37,7 +37,7 @@ export default function Navbar() {
   return (
     <header className="absolute top-0 left-0 w-full px-10 py-6 flex justify-between items-center z-50">
 
-      {/* LOGO → always goes home */}
+      {/* LOGO  always goes home */}
       <button
         onClick={goHome}
         className="
@@ -52,7 +52,7 @@ export default function Navbar() {
       {/* RIGHT NAV */}
       <nav className="flex gap-8 text-lg">
 
-        {/* 🔹 USERNAME when logged in, otherwise “My Space” */}
+        {/*  USERNAME when logged in, otherwise “My Space” */}
         <button
           onClick={goMySpace}
           className="hover:text-cyan-300 transition"
@@ -60,7 +60,7 @@ export default function Navbar() {
           {token && user?.username ? `@${user.username}` : "My Space"}
         </button>
 
-        {/* 🔹 CONDITIONAL LOGIN / LOGOUT */}
+        {/*  CONDITIONAL LOGIN / LOGOUT */}
         {!token ? (
           <button onClick={goLogin} className="hover:text-cyan-300 transition">
             Login

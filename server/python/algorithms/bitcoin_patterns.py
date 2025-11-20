@@ -103,9 +103,7 @@ def detect_exponential_growth(df):
     dates = pd.to_datetime(df['Open time'])
     
     # Find the strongest bull market phase
-    # We'll look for sustained growth over multiple months
-    
-    # Simple approach: find max drawup (biggest increase)
+
     cumulative_max = np.maximum.accumulate(prices)
     drawups = (prices - np.minimum.accumulate(prices)) / np.minimum.accumulate(prices)
     
@@ -362,37 +360,37 @@ def generate_insights(patterns):
     # Statistics
     stats = patterns.get('statistics', {})
     if stats:
-        insights.append(f"📊 Analyzed {stats['total_days']} days of Bitcoin price data")
-        insights.append(f"💰 Price range: ${stats['price_min']:,.0f} → ${stats['price_max']:,.0f}")
+        insights.append(f" Analyzed {stats['total_days']} days of Bitcoin price data")
+        insights.append(f" Price range: ${stats['price_min']:,.0f} → ${stats['price_max']:,.0f}")
         
         if stats['total_growth'] > 0:
-            insights.append(f"📈 Overall growth: +{stats['total_growth']:.1f}%")
+            insights.append(f" Overall growth: +{stats['total_growth']:.1f}%")
         else:
-            insights.append(f"📉 Overall change: {stats['total_growth']:.1f}%")
+            insights.append(f" Overall change: {stats['total_growth']:.1f}%")
     
     # Fibonacci
     fib = patterns.get('fibonacci_retracements', {})
     if 'levels' in fib:
-        insights.append(f"✨ Detected {len(fib['levels'])} Fibonacci retracement levels")
-        insights.append(f"🎯 Golden ratio support at ${fib['levels']['0.618']:,.0f}")
-        insights.append(f"🔺 Major swing: ${fib['swing_low']:,.0f} to ${fib['swing_high']:,.0f}")
+        insights.append(f" Detected {len(fib['levels'])} Fibonacci retracement levels")
+        insights.append(f" Golden ratio support at ${fib['levels']['0.618']:,.0f}")
+        insights.append(f" Major swing: ${fib['swing_low']:,.0f} to ${fib['swing_high']:,.0f}")
     
     # Exponential growth
     exp = patterns.get('exponential_growth', {})
     if 'growth_multiple' in exp:
-        insights.append(f"🚀 Exponential bull market: {exp['growth_multiple']:.1f}x growth over {exp['duration_days']} days")
-        insights.append(f"📐 Exponential fit quality: R² = {exp['r_squared']:.3f}")
+        insights.append(f" Exponential bull market: {exp['growth_multiple']:.1f}x growth over {exp['duration_days']} days")
+        insights.append(f" Exponential fit quality: R² = {exp['r_squared']:.3f}")
     
     # Cycles
     cycles = patterns.get('market_cycles', {})
     if 'cycle_period_months' in cycles:
-        insights.append(f"🔄 Market cycles detected: ~{cycles['cycle_period_months']} month periods")
-        insights.append(f"📊 Found {cycles['num_cycles']} complete boom-bust cycles")
+        insights.append(f" Market cycles detected: ~{cycles['cycle_period_months']} month periods")
+        insights.append(f" Found {cycles['num_cycles']} complete boom-bust cycles")
     
     # Golden ratios
     golden = patterns.get('golden_ratios', {})
     if golden.get('found_count', 0) > 0:
-        insights.append(f"✨ Found {golden['found_count']} price movements following the golden ratio (φ = 1.618)")
+        insights.append(f" Found {golden['found_count']} price movements following the golden ratio (φ = 1.618)")
     
     return insights
 

@@ -16,9 +16,9 @@ app.use(cors({
   credentials: true
 }));
 
-// ✨ INCREASE LIMITS HERE ✨
-app.use(express.json({ limit: '50mb' }));  // ← Changed from default 100kb
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // ← Added limit
+// LIMIT INCREASED FOR DISPLAY
+app.use(express.json({ limit: '50mb' }));  //  Changed from default 100kb
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));  //  Added limit
 
 // Routes
 app.get('/api/health', (req, res) => {
