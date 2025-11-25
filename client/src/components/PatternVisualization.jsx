@@ -1,13 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import React, { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+// Pattern renderers (we will create these next, one by one)
+import { renderDataRibbon } from "./renderers/renderDataRibbon";
+import { renderGoldenSpiral } from "./renderers/renderGoldenSpiral";
+import { renderGoldenHelicoid } from "./renderers/renderGoldenHelicoid";
+import { renderVolumeSpiral } from "./renderers/renderVolumeSpiral";
+import { renderNoiseMesh } from "./renderers/renderNoiseMesh";
+import { renderCandleSpiral } from "./renderers/renderCandleSpiral";
 
 export default function PatternVisualization({ data }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
-  // Safety check
-  if (!data || !data.visualization_data || !data.visualization_data.points) {
+  // Basic safety check – we at least need visualization_data
+  if (!data || !data.visualization_data) {
     return (
       <div className="w-full h-[600px] bg-paper rounded-sm border border-ink/15 flex items-center justify-center">
         <div className="text-center">
@@ -25,8 +33,13 @@ export default function PatternVisualization({ data }) {
     let frameId;
     const disposables = [];
     let renderer;
+    let mainGroup = null;
+    let customUpdate = null;
 
-    // Scene + Camera
+    const vizData = data.visualization_data;
+    const patternType = vizData.type || "data_ribbon";
+
+    // ---------------- Scene & Camera ----------------
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x222233);
 
@@ -34,7 +47,14 @@ export default function PatternVisualization({ data }) {
     const height = mount.clientHeight;
 
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
-    camera.position.set(120, 140, 160);
+
+    // Use camera hint from backend if available
+    if (vizData.camera_position) {
+      const { x, y, z } = vizData.camera_position;
+      camera.position.set(x, y, z);
+    } else {
+      camera.position.set(120, 140, 160);
+    }
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
@@ -51,177 +71,87 @@ export default function PatternVisualization({ data }) {
     controls.minDistance = 60;
     controls.maxDistance = 350;
 
-    // ================================================
-    // ⭐ REAL DATAPOINT SPIRAL (with HEIGHT SCALE)
-    // ================================================
+    // Target / look-at
+    const look = vizData.camera_look_at || { x: 0, y: 0, z: 0 };
+    controls.target.set(look.x, look.y, look.z);
+    camera.lookAt(controls.target);
+    controls.update();
 
-    const rawPoints = data.visualization_data.points;
-    if (rawPoints.length < 2) {
-      setLoading(false);
-      return;
-    }
-
-    const pathPoints = rawPoints.map(
-      p => new THREE.Vector3(p.x, p.y, p.z)
-    );
-
-    // Center the data
-    const bbox = new THREE.Box3().setFromPoints(pathPoints);
-    const center = new THREE.Vector3();
-    bbox.getCenter(center);
-
-    // ⭐ HEIGHT SCALE — controls vertical stretching
-    const HEIGHT_SCALE = 15;   // Try 10, 15, or 20
-
-    const centeredPathPoints = pathPoints.map(p => {
-      return new THREE.Vector3(
-        p.x - center.x,
-        (p.y - center.y) * HEIGHT_SCALE,
-        p.z - center.z
-      );
-    });
-
-    // Smooth curve through datapoints
-    const curve = new THREE.CatmullRomCurve3(centeredPathPoints, false, 'catmullrom', 0.1);
-    disposables.push(curve);
-
-    // ================================================
-    // ⭐ 3D RIBBON GEOMETRY
-    // ================================================
-    const segments = 500;
-    const ribbonWidth = 7;
-
-    const positions = [];
-    const indices = [];
-    const colors = [];
-
-    const colorA = new THREE.Color(0x66d098);
-    const colorB = new THREE.Color(0x4a8ddb);
-    const tmpColor = new THREE.Color();
-
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-
-      const point = curve.getPoint(t);
-      const tangent = curve.getTangent(t).normalize();
-
-      // Create sideways normal
-      let up = new THREE.Vector3(0, 1, 0);
-      if (Math.abs(tangent.dot(up)) > 0.9) up = new THREE.Vector3(1, 0, 0);
-
-      const normal = new THREE.Vector3().crossVectors(tangent, up).normalize();
-      const left = point.clone().addScaledVector(normal, ribbonWidth * 0.5);
-      const right = point.clone().addScaledVector(normal, -ribbonWidth * 0.5);
-
-      positions.push(left.x, left.y, left.z);
-      positions.push(right.x, right.y, right.z);
-
-      tmpColor.copy(colorA).lerp(colorB, t);
-      colors.push(tmpColor.r, tmpColor.g, tmpColor.b);
-      colors.push(tmpColor.r, tmpColor.g, tmpColor.b);
-    }
-
-    for (let i = 0; i < segments; i++) {
-      const a = i * 2;
-      const b = a + 1;
-      const c = a + 2;
-      const d = a + 3;
-
-      indices.push(a, c, b);
-      indices.push(c, d, b);
-    }
-
-    const ribbonGeometry = new THREE.BufferGeometry();
-    ribbonGeometry.setIndex(indices);
-    ribbonGeometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    ribbonGeometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-    ribbonGeometry.computeVertexNormals();
-    disposables.push(ribbonGeometry);
-
-    const ribbonMaterial = new THREE.MeshPhongMaterial({
-      vertexColors: true,
-      shininess: 60,
-      side: THREE.DoubleSide,
-      opacity: 0.95,
-      transparent: true
-    });
-    disposables.push(ribbonMaterial);
-
-    const ribbonMesh = new THREE.Mesh(ribbonGeometry, ribbonMaterial);
-    scene.add(ribbonMesh);
-
-    // ================================================
-    // ⭐ Wireframe Grid Overlay
-    // ================================================
-    const wireMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      wireframe: true,
-      opacity: 0.35,
-      transparent: true,
-      depthWrite: false
-    });
-
-    disposables.push(wireMaterial);
-
-    const wireMesh = new THREE.Mesh(ribbonGeometry, wireMaterial);
-    scene.add(wireMesh);
-
-    // ================================================
-    // ⭐ Fibonacci Rings
-    // ================================================
-    const ringsData = data.visualization_data.fibonacci_rings || [];
-    const fibRings = [];
-
-    ringsData.forEach(ring => {
-      const radius = 85;
-      const thickness = 0.7;
-
-      const ringGeom = new THREE.TorusGeometry(radius, thickness, 16, 100);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: ring.color,
-        transparent: true,
-        opacity: ring.is_golden ? 0.6 : 0.25
-      });
-
-      disposables.push(ringGeom, ringMat);
-
-      const ringMesh = new THREE.Mesh(ringGeom, ringMat);
-      ringMesh.rotation.x = Math.PI / 2;
-
-      // Height scale applies to rings too
-      ringMesh.position.y = (ring.y - center.y) * HEIGHT_SCALE;
-      scene.add(ringMesh);
-      fibRings.push(ringMesh);
-    });
-
-    // ================================================
-    // ⭐ Lighting
-    // ================================================
+    // ---------------- Lighting (shared) ----------------
     const ambient = new THREE.AmbientLight(0xffffff, 0.35);
     const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
     dir1.position.set(120, 200, 150);
     const dir2 = new THREE.DirectionalLight(0x88aaff, 0.5);
     dir2.position.set(-100, -60, -100);
-
     scene.add(ambient, dir1, dir2);
+
+    // ---------------- Pattern Dispatch ----------------
+    try {
+      let result;
+
+      const renderProps = {
+        scene,
+        vizData,
+        THREE,
+        disposables
+      };
+
+      switch (patternType) {
+        case "data_ribbon":
+          result = renderDataRibbon(renderProps);
+          break;
+        case "golden_spiral":
+          result = renderGoldenSpiral(renderProps);
+          break;
+        case "golden_helicoid":
+          result = renderGoldenHelicoid(renderProps);
+          break;
+        case "volume_spiral":
+          result = renderVolumeSpiral(renderProps);
+          break;
+        case "noise_mesh":
+          result = renderNoiseMesh(renderProps);
+          break;
+        case "candle_spiral":
+          result = renderCandleSpiral(renderProps);
+          break;
+        default:
+          // Fallback
+          result = renderDataRibbon(renderProps);
+          break;
+      }
+
+      if (result && result.group) {
+        mainGroup = result.group;
+      }
+      if (result && typeof result.update === "function") {
+        customUpdate = result.update;
+      }
+    } catch (e) {
+      console.error("Error rendering pattern:", e);
+    }
 
     setLoading(false);
 
-    // ================================================
-    // ⭐ Animation Loop
-    // ================================================
+    // ---------------- Animation Loop ----------------
     const animate = () => {
       frameId = requestAnimationFrame(animate);
 
-      ribbonMesh.rotation.y += 0.003;
-      wireMesh.rotation.y += 0.003;
+      if (mainGroup) {
+        mainGroup.rotation.y += 0.003;
+      }
+
+      if (typeof customUpdate === "function") {
+        customUpdate();
+      }
 
       controls.update();
       renderer.render(scene, camera);
     };
+
     animate();
 
-    // Resize
+    // ---------------- Resize ----------------
     const handleResize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
@@ -231,13 +161,13 @@ export default function PatternVisualization({ data }) {
     };
     window.addEventListener("resize", handleResize);
 
-    // Cleanup
+    // ---------------- Cleanup ----------------
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
 
-      disposables.forEach(obj => obj?.dispose?.());
-      renderer?.dispose?.();
+      disposables.forEach((obj) => obj && typeof obj.dispose === "function" && obj.dispose());
+      if (renderer) renderer.dispose();
 
       if (renderer?.domElement && mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
@@ -251,7 +181,7 @@ export default function PatternVisualization({ data }) {
         <div className="absolute inset-0 flex items-center justify-center bg-paper/70 backdrop-blur-md z-10">
           <div className="text-center">
             <div className="text-4xl mb-2 animate-pulse">✨</div>
-            <p className="text-sm opacity-80">Rendering your spiral…</p>
+            <p className="text-sm opacity-80">Rendering your pattern…</p>
           </div>
         </div>
       )}
