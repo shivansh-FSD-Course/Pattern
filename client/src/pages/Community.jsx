@@ -484,8 +484,8 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientY - rect.top - rect.height / 2) / 50;
-    const y = (e.clientX - rect.left - rect.width / 2) / 50;
+    const x = (e.clientY - rect.top - rect.height / 2) / 250;
+    const y = (e.clientX - rect.left - rect.width / 2) / 250;
     setTilt({ x, y });
   };
 

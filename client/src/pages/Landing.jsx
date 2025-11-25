@@ -286,8 +286,8 @@ function FeatureCard({ icon, title, desc, delay }) {
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientY - rect.top - rect.height / 2) / 25;
-    const y = (e.clientX - rect.left - rect.width / 2) / 25;
+    const x = (e.clientY - rect.top - rect.height / 2) / 250;
+    const y = (e.clientX - rect.left - rect.width / 2) / 250;
     setTilt({ x, y });
   };
 
