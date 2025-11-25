@@ -61,12 +61,8 @@ export default function Dashboard() {
   const [patternTitle, setPatternTitle] = useState(""); // ← MOVED INSIDE!
 
   // Sample collection data
-  const [myCollection] = useState([
-    { id: 1, title: "Sales Growth Pattern", type: "Exponential", date: "2024-03-15", thumbnail: "🔺" },
-    { id: 2, title: "Fibonacci in Nature", type: "Fibonacci", date: "2024-03-14", thumbnail: "🌀" },
-    { id: 3, title: "Wave Analysis", type: "Sine Wave", date: "2024-03-12", thumbnail: "〰️" },
-    { id: 4, title: "Golden Ratio Discovery", type: "Golden Ratio", date: "2024-03-10", thumbnail: "✨" },
-  ]);
+  const [myCollection, setMyCollection] = useState([]);
+  const [loadingCollection, setLoadingCollection] = useState(true);
 
   // Stats
   const stats = {
@@ -152,10 +148,63 @@ export default function Dashboard() {
     setShowAvatarModal(false);
     await handleSaveProfile();
   };
+/* 
+    HELPER: Get pattern thumbnail
+*/
+const getPatternThumbnail = (type) => {
+  const thumbnails = {
+    bitcoin: '₿',
+    stock: '📈',
+    fibonacci: '🌀',
+    golden: '✨',
+    exponential: '🔺',
+    wave: '〰️',
+    chaos: '🌪️',
+    fourier: '📊',
+    other: '✨'
+  };
+  return thumbnails[type] || '✨';
+};
 
+/* 
+    FETCH USER'S PATTERNS FROM DATABASE
+*/
+const fetchMyPatterns = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const res = await api.get('/patterns/my-patterns', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data.success) {
+      const transformedPatterns = res.data.patterns.map(pattern => ({
+        id: pattern._id,
+        title: pattern.title,
+        type: pattern.patternType || 'other',
+        date: new Date(pattern.createdAt).toLocaleDateString(),
+        thumbnail: getPatternThumbnail(pattern.patternType),
+        analysisData: pattern.analysisData
+      }));
+      setMyCollection(transformedPatterns);
+    }
+    setLoadingCollection(false);
+  } catch (error) {
+    console.error('Failed to fetch patterns:', error);
+    setLoadingCollection(false);
+  }
+};
+
+  /* Mount animation trigger */
   /* Mount animation trigger */
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  /* Fetch user's patterns on mount */
+  useEffect(() => {
+    fetchMyPatterns();
   }, []);
 
   /* Scroll handler for parallax */
@@ -200,6 +249,7 @@ export default function Dashboard() {
       });
 
       if (response.data.success) {
+        console.log('Analyzed Data:', response.data.data)
         setAnalyzedData(response.data.data);
         setShowVisualization(true);
         setAnalyzing(false);
@@ -245,6 +295,7 @@ export default function Dashboard() {
         });
 
         if (response.data.success) {
+          console.log('Analyzed Data:', response.data.data)
           setAnalyzedData(response.data.data);
           setShowVisualization(true);
           setAnalyzing(false);
@@ -262,35 +313,42 @@ export default function Dashboard() {
       PUBLISH HANDLER
   */
   const handlePublish = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      const response = await api.post('/patterns/publish', {
-        title: patternTitle || uploadedFile.name.replace('.csv', ''),
-        caption: caption,
-        datasetName: uploadedFile.name,
-        patternType: analyzedData.dataset_type || 'other',
-        analysisData: {
-          patterns: analyzedData.patterns,
-          visualization_data: analyzedData.visualization_data,
-          insights: analyzedData.insights
-        }
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.success) {
-        alert('Pattern published to community! 🎉');
-        setShowPublishModal(false);
-        setCaption("");
-        setPatternTitle("");
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await api.post('/patterns/publish', {
+      title: patternTitle || uploadedFile.name.replace('.csv', ''),
+      caption: caption,
+      datasetName: uploadedFile.name,
+      patternType: analyzedData.dataset_type || 'other',
+      analysisData: {
+        patterns: analyzedData.patterns,
+        visualization_data: analyzedData.visualization_data,
+        insights: analyzedData.insights
       }
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-    } catch (error) {
-      console.error('Publish failed:', error);
-      alert(error.response?.data?.message || 'Failed to publish pattern');
+    if (response.data.success) {
+      alert('Pattern published to community! ✨');
+      
+      //  INSTEAD OF RELOAD, REFETCH THE PATTERNS
+      await fetchMyPatterns();
+      
+      // Reset states
+      setShowPublishModal(false);
+      setPatternTitle('');
+      setCaption('');
+      setUploadedFile(null);
+      setAnalyzedData(null);
+      setShowVisualization(false);
     }
-  };
+  } catch (error) {
+    console.error('Publish failed:', error);
+    alert('Failed to publish pattern');
+  }
+};
 
   /* 
       FLOATING GLYPH BACKGROUND
@@ -641,7 +699,12 @@ export default function Dashboard() {
           >
             <h2 className="font-serif text-[28px] mb-6">My Collection</h2>
 
-            {myCollection.length > 0 ? (
+            {loadingCollection ? (
+              <div className="text-center py-12 opacity-60">
+                <div className="text-5xl mb-3 animate-pulse">⏳</div>
+                <p className="font-serif text-lg">Loading your patterns...</p>
+              </div>
+            ) : myCollection.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {myCollection.map((item, index) => (
                   <CollectionCard key={item.id} item={item} delay={index * 0.1} />

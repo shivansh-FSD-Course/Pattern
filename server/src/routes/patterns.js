@@ -5,10 +5,11 @@ import {
   analyzePattern, 
   publishPattern, 
   getCommunityPatterns,
+  getUserPatterns,
   likePattern,
-  addComment,      // ← NEW
-  deleteComment,   // ← NEW
-  likeComment      // ← NEW
+  addComment,      
+  deleteComment,   
+  likeComment      
 } from '../controllers/patternController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -41,6 +42,7 @@ const upload = multer({
 router.post('/analyze', protect, upload.single('file'), analyzePattern);
 router.post('/publish', protect, publishPattern);
 router.get('/community', getCommunityPatterns);
+router.get('/my-patterns', protect, getUserPatterns);
 router.post('/:patternId/like', protect, likePattern);
 
 // Comment routes

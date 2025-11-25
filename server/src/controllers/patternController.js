@@ -251,7 +251,25 @@ export const getCommunityPatterns = async (req, res) => {
     });
   }
 };
+// Get user's own patterns
+export const getUserPatterns = async (req, res) => {
+  try {
+    const patterns = await Pattern.find({ user: req.user._id })
+      .populate('user', 'username avatar')
+      .sort({ createdAt: -1 });
 
+    res.json({
+      success: true,
+      patterns
+    });
+  } catch (error) {
+    console.error('Failed to fetch user patterns:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch patterns'
+    });
+  }
+};
 // Like pattern
 export const likePattern = async (req, res) => {
   try {
