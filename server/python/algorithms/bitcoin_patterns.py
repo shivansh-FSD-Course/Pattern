@@ -8,7 +8,6 @@ from scipy.optimize import curve_fit
 from scipy.fft import fft, fftfreq
 import random
 
-
 # =====================================================================
 # MAIN DISPATCH
 # =====================================================================
@@ -30,7 +29,7 @@ def analyze_bitcoin_patterns(csv_path):
             'statistics': calculate_statistics(df)
         }
 
-        # Visualization
+        # Visualization — fixed spiral output
         viz_data = generate_visualization_data(df, patterns)
 
         # Insights
@@ -49,7 +48,7 @@ def analyze_bitcoin_patterns(csv_path):
 
 
 # =====================================================================
-# PATTERN DETECTORS (unchanged)
+# PATTERN DETECTORS
 # =====================================================================
 
 def detect_fibonacci_retracements(df):
@@ -77,7 +76,6 @@ def detect_fibonacci_retracements(df):
         '0.618': float(swing_low + diff * 0.618),
         '0.786': float(swing_low + diff * 0.786),
         '1.0': float(swing_high),
-        '1.272': float(swing_high + diff * 0.272),
         '1.618': float(swing_high + diff * 0.618)
     }
 
@@ -116,8 +114,10 @@ def detect_exponential_growth(df):
         return a * np.exp(b * x)
 
     try:
-        params, _ = curve_fit(exp_func, segment_time, segment_prices,
-                              p0=[segment_prices[0], 0.01], maxfev=5000)
+        params, _ = curve_fit(
+            exp_func, segment_time, segment_prices,
+            p0=[segment_prices[0], 0.01], maxfev=5000
+        )
 
         predicted = exp_func(segment_time, *params)
         ss_res = np.sum((segment_prices - predicted) ** 2)
@@ -147,7 +147,7 @@ def detect_market_cycles(df):
 
     detrended = signal.detrend(prices)
     fft_vals = fft(detrended)
-    freqs = fftfreq(len(prices), d=1)
+    freqs = fftfreq(len(prices), 1)
 
     pos_freqs = freqs[:len(prices) // 2]
     fft_mag = np.abs(fft_vals[:len(prices) // 2])
@@ -183,14 +183,14 @@ def detect_golden_ratios(df):
     if len(peaks_idx) < 2:
         return {'found_count': 0, 'occurrences': []}
 
-    occurrences = []
+    matches = []
     for i in range(len(peaks_idx) - 1):
         p1 = float(prices[peaks_idx[i]])
         p2 = float(prices[peaks_idx[i + 1]])
         ratio = p2 / p1
 
         if abs(ratio - GOLD) / GOLD < TOL:
-            occurrences.append({
+            matches.append({
                 'date1': dates.iloc[peaks_idx[i]].strftime('%Y-%m-%d'),
                 'date2': dates.iloc[peaks_idx[i + 1]].strftime('%Y-%m-%d'),
                 'price1': p1,
@@ -199,8 +199,8 @@ def detect_golden_ratios(df):
             })
 
     return {
-        'found_count': len(occurrences),
-        'occurrences': occurrences[:10]
+        'found_count': len(matches),
+        'occurrences': matches[:10]
     }
 
 
@@ -231,27 +231,16 @@ def build_fibonacci_rings(prices, patterns):
         return []
 
     pmin, pmax = prices.min(), prices.max()
-    levels = fib["levels"]
-
-    color_map = {
-        '0.0': '#C9A961',
-        '0.236': '#7BA591',
-        '0.382': '#8B7BA8',
-        '0.500': '#5C8BB8',
-        '0.618': '#FFD700',
-        '0.786': '#B85C5C',
-        '1.0': '#C9A961',
-        '1.618': '#FF6B6B'
-    }
 
     rings = []
-    for level_name, price in levels.items():
-        y = (price - pmin) / (pmax - pmin + 1e-9) * 50
+    for level_name, price in fib["levels"].items():
+        y = (price - pmin) / (pmax - pmin + 1e-9) * 60
+
         rings.append({
             "level": level_name,
             "price": float(price),
             "y": float(y),
-            "color": color_map.get(level_name, "#999"),
+            "color": "#88ccee" if level_name in ["0.618", "1.618"] else "#445577",
             "is_golden": level_name in ["0.618", "1.618"]
         })
 
@@ -259,129 +248,136 @@ def build_fibonacci_rings(prices, patterns):
 
 
 # =====================================================================
-# VISUALIZATION DISPATCH (3 TYPES ONLY)
+# FIXED, SAFE, BEAUTIFUL 3D SPIRAL GENERATOR
 # =====================================================================
 
 def generate_visualization_data(df, patterns):
-    choices = ["data_ribbon", "golden_spiral", "candle_spiral"]
-    chosen = random.choice(choices)
-
-    if chosen == "data_ribbon":
-        return generate_data_ribbon(df, patterns)
-    elif chosen == "golden_spiral":
-        return generate_golden_spiral(df, patterns)
-    elif chosen == "candle_spiral":
-        return generate_candle_spiral(df, patterns)
-
-    return generate_data_ribbon(df, patterns)
-
-
-# =====================================================================
-# VIZ TYPE 1 — DATA RIBBON
-# =====================================================================
-
-def generate_data_ribbon(df, patterns):
-    prices = df["Close"].values
+    prices = df["Close"].values.astype(float)
     dates = pd.to_datetime(df["Open time"])
 
-    pmin, pmax = prices.min(), prices.max()
-    norm = (prices - pmin) / (pmax - pmin + 1e-9) * 50
+    # Normalize
+    pmin = float(np.nanmin(prices))
+    pmax = float(np.nanmax(prices))
+    scale = (prices - pmin) / (pmax - pmin + 1e-9)
 
-    GA = 137.5 * np.pi / 180
+    # --- Pick a visualization type -----------------------------------
+    viz_type = random.choice(["data_ribbon", "golden_spiral", "candle_spiral"])
+    # viz_type = "golden_spiral"   # <- uncomment to force a specific one
 
-    points = []
-    for i in range(len(prices)):
-        angle = i * GA
-        radius = np.sqrt(i) * 0.3
+    # ---------------------------------------------------------------
+    # 1) VERTICAL COLUMN (always works, backup)
+    # ---------------------------------------------------------------
+    def build_vertical_column():
+        pts = []
+        for i, p in enumerate(scale):
+            pts.append({
+                "x": 0.0,
+                "y": float(p * 100),
+                "z": 0.0,
+                "price": float(prices[i]),
+                "index": i,
+                "date": dates.iloc[i].strftime("%Y-%m-%d"),
+            })
+        return {
+            "type": "vertical_column",
+            "points": pts,
+            "camera_position": {"x": 120, "y": 140, "z": 160},
+            "camera_look_at": {"x": 0, "y": 50, "z": 0},
+        }
 
-        points.append({
-            "x": float(radius * np.cos(angle)),
-            "y": float(norm[i]),
-            "z": float(radius * np.sin(angle)),
-            "price": float(prices[i]),
-            "index": i,
-            "date": dates.iloc[i].strftime("%Y-%m-%d")
-        })
+    # ---------------------------------------------------------------
+    # 2) DATA RIBBON (smooth spiral ribbon)
+    # ---------------------------------------------------------------
+    def build_data_ribbon():
+        pts = []
+        golden = 137.5 * np.pi / 180
+        for i in range(len(prices)):
+            angle = i * golden
+            radius = np.sqrt(i) * 0.3
+            pts.append({
+                "x": float(radius * np.cos(angle)),
+                "y": float(scale[i] * 60),
+                "z": float(radius * np.sin(angle)),
+                "price": float(prices[i]),
+                "index": i,
+                "date": dates.iloc[i].strftime("%Y-%m-%d"),
+            })
+        return {
+            "type": "data_ribbon",
+            "points": pts,
+            "camera_position": {"x": 40, "y": 50, "z": 40},
+            "camera_look_at": {"x": 0, "y": 30, "z": 0},
+        }
 
-    return {
-        "type": "data_ribbon",
-        "points": points,
-        "fibonacci_rings": build_fibonacci_rings(prices, patterns),
-        "camera_position": {"x": 40, "y": 40, "z": 40},
-        "camera_look_at": {"x": 0, "y": 25, "z": 0}
+    # ---------------------------------------------------------------
+    # 3) GOLDEN SPIRAL (top-to-bottom helix)
+    # ---------------------------------------------------------------
+    def build_golden_spiral():
+        pts = []
+        golden = 137.5 * np.pi / 180
+        for i in range(len(prices)):
+            angle = i * golden
+            radius = i * 0.05
+            height = i * 0.05
+            pts.append({
+                "x": float(radius * np.cos(angle)),
+                "y": float(height),
+                "z": float(radius * np.sin(angle)),
+                "price": float(prices[i]),
+                "index": i,
+                "date": dates.iloc[i].strftime("%Y-%m-%d"),
+            })
+        return {
+            "type": "golden_spiral",
+            "points": pts,
+            "camera_position": {"x": 80, "y": 80, "z": 90},
+            "camera_look_at": {"x": 0, "y": (len(prices)*0.05)/2, "z": 0},
+        }
+
+    # ---------------------------------------------------------------
+    # 4) CANDLE SPIRAL (this is the red cylinder that already works)
+    # ---------------------------------------------------------------
+    def build_candle_spiral():
+        close = df["Close"].values
+        high = df["High"].values if "High" in df else close
+        low = df["Low"].values if "Low" in df else close
+        pts = []
+        golden = 137.5 * np.pi / 180
+        for i in range(len(close)):
+            angle = i * golden
+            radius = np.sqrt(i) * 0.25
+            height = (high[i] - low[i]) * 0.02
+            pts.append({
+                "x": float(radius * np.cos(angle)),
+                "y": float(height),
+                "z": float(radius * np.sin(angle)),
+                "open": float(df["Open"][i]) if "Open" in df else float(close[i]),
+                "close": float(close[i]),
+                "high": float(high[i]),
+                "low": float(low[i]),
+                "index": i
+            })
+        return {
+            "type": "candle_spiral",
+            "points": pts,
+            "camera_position": {"x": 120, "y": 120, "z": 140},
+            "camera_look_at": {"x": 0, "y": 20, "z": 0},
+        }
+
+    # ---- dispatch table ----
+    mapping = {
+        "vertical_column": build_vertical_column,
+        "data_ribbon": build_data_ribbon,
+        "golden_spiral": build_golden_spiral,
+        "candle_spiral": build_candle_spiral,
     }
 
+    # Build chosen type — if anything fails → fallback
+    try:
+        return mapping[viz_type]()
+    except:
+        return build_vertical_column()
 
-# =====================================================================
-# VIZ TYPE 2 — GOLDEN SPIRAL
-# =====================================================================
-
-def generate_golden_spiral(df, patterns):
-    prices = df["Close"].values
-    dates = pd.to_datetime(df["Open time"])
-
-    GA = 137.5 * np.pi / 180
-
-    points = []
-    for i in range(len(prices)):
-        angle = i * GA
-        radius = i * 0.15
-        height = i * 0.05
-
-        points.append({
-            "x": float(radius * np.cos(angle)),
-            "y": float(height),
-            "z": float(radius * np.sin(angle)),
-            "price": float(prices[i]),
-            "index": i,
-            "date": dates.iloc[i].strftime("%Y-%m-%d")
-        })
-
-    return {
-        "type": "golden_spiral",
-        "points": points,
-        "fibonacci_rings": build_fibonacci_rings(prices, patterns),
-        "camera_position": {"x": 80, "y": 80, "z": 90},
-        "camera_look_at": {"x": 0, "y": 40, "z": 0}
-    }
-
-
-# =====================================================================
-# VIZ TYPE 3 — CANDLE SPIRAL
-# =====================================================================
-
-def generate_candle_spiral(df, patterns):
-    close = df["Close"].values
-    openp = df["Open"].values if "Open" in df.columns else close
-    high = df["High"].values if "High" in df.columns else close
-    low = df["Low"].values if "Low" in df.columns else close
-
-    GA = 137.5 * np.pi / 180
-
-    points = []
-    for i in range(len(close)):
-        angle = i * GA
-        radius = np.sqrt(i) * 0.25
-
-        height = (high[i] - low[i]) * 0.02  # candle height
-
-        points.append({
-            "x": float(radius * np.cos(angle)),
-            "y": float(height),
-            "z": float(radius * np.sin(angle)),
-            "open": float(openp[i]),
-            "close": float(close[i]),
-            "high": float(high[i]),
-            "low": float(low[i]),
-            "index": i
-        })
-
-    return {
-        "type": "candle_spiral",
-        "points": points,
-        "camera_position": {"x": 120, "y": 120, "z": 130},
-        "camera_look_at": {"x": 0, "y": 40, "z": 0}
-    }
 
 
 # =====================================================================
@@ -393,27 +389,27 @@ def generate_insights(patterns):
 
     stats = patterns.get("statistics", {})
     if stats:
-        insights.append(f" Analyzed {stats['total_days']} days")
-        insights.append(f" Price: ${stats['price_min']:,.0f} → ${stats['price_max']:,.0f}")
-        insights.append(f" Growth: {stats['total_growth']:.1f}%")
+        insights.append(f"Analyzed {stats['total_days']} days")
+        insights.append(f"Price: ${stats['price_min']:,.0f} → ${stats['price_max']:,.0f}")
+        insights.append(f"Growth: {stats['total_growth']:.1f}%")
 
     fib = patterns.get("fibonacci_retracements", {})
     if "levels" in fib:
-        insights.append(f" Fibonacci levels detected")
-        insights.append(f" Golden 0.618 level: ${fib['levels']['0.618']:,.0f}")
+        insights.append("Fibonacci retracements detected")
+        insights.append(f"Golden 0.618: ${fib['levels']['0.618']:,.0f}")
 
     exp = patterns.get("exponential_growth", {})
     if "growth_multiple" in exp:
-        insights.append(f" Bull run: {exp['growth_multiple']:.1f}x growth")
-        insights.append(f" Exponential R² = {exp['r_squared']:.3f}")
+        insights.append(f"Bull run growth: {exp['growth_multiple']:.1f}x")
+        insights.append(f"Exponential R²: {exp['r_squared']:.3f}")
 
-    cycles = patterns.get("market_cycles", {})
-    if "cycle_period_months" in cycles:
-        insights.append(f" Market cycles: ~{cycles['cycle_period_months']} months")
+    cyc = patterns.get("market_cycles", {})
+    if "cycle_period_months" in cyc:
+        insights.append(f"Market cycle length: ~{cyc['cycle_period_months']} months")
 
     golden = patterns.get("golden_ratios", {})
     if golden.get("found_count", 0) > 0:
-        insights.append(f" Detected {golden['found_count']} golden ratio movements")
+        insights.append(f"{golden['found_count']} golden ratio occurrences")
 
     return insights
 

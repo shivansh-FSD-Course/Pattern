@@ -2,21 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-// Only the 3 working renderers
 import { RENDERERS, getRandomRenderer } from "./renderers";
 
 export default function PatternVisualization({ data }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
-  // Require visualization_data
   if (!data || !data.visualization_data) {
     return (
-      <div className="w-full h-[600px] bg-paper rounded-sm border border-ink/15 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-2 opacity-60">⚠️</div>
-          <p className="text-sm opacity-60">Visualization data unavailable</p>
-        </div>
+      <div className="w-full h-[600px] bg-paper border flex items-center justify-center">
+        <p className="opacity-60 text-sm">No visualization data</p>
       </div>
     );
   }
@@ -25,86 +20,95 @@ export default function PatternVisualization({ data }) {
     const mount = mountRef.current;
     if (!mount) return;
 
-    let frameId = null;
+    let frameId;
     const disposables = [];
-    let renderer = null;
-    let updateFn = () => {};
 
     const vizData = data.visualization_data;
+    const pts = vizData.points || [];
 
-    // ---------------- Scene ----------------
+    // ----- Scene -----
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x222233);
+    scene.background = new THREE.Color(0x1d1e2e);
 
     const width = mount.clientWidth;
     const height = mount.clientHeight;
 
-    // ---------------- Camera ----------------
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
+    // ---- Root group (centers everything) ----
+    const root = new THREE.Group();
+    root.position.set(0, 0, 0);
+    scene.add(root);
 
-    if (vizData.camera_position) {
-      const { x, y, z } = vizData.camera_position;
-      camera.position.set(x, y, z);
-    } else {
-      camera.position.set(140, 150, 165);
-    }
+    // ----- Camera -----
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 4000);
+    const cam = vizData.camera_position || { x: 140, y: 140, z: 140 };
+    camera.position.set(cam.x, cam.y, cam.z);
 
-    // ---------------- Renderer ----------------
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
+    // ----- Renderer -----
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(width, height);
 
     mount.innerHTML = "";
     mount.appendChild(renderer.domElement);
 
-    // ---------------- Controls ----------------
+    // ----- Controls -----
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.35;
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.minDistance = 60;
-    controls.maxDistance = 350;
 
-    const look = vizData.camera_look_at || { x: 0, y: 0, z: 0 };
+    const look = vizData.camera_look_at || { x: 0, y: 50, z: 0 };
     controls.target.set(look.x, look.y, look.z);
     camera.lookAt(controls.target);
 
-    // ---------------- Lighting ----------------
-    const ambient = new THREE.AmbientLight(0xffffff, 0.35);
-    const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir1.position.set(120, 200, 150);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
 
-    const dir2 = new THREE.DirectionalLight(0x88aaff, 0.5);
-    dir2.position.set(-100, -60, -100);
+    controls.minDistance = 60;
+    controls.maxDistance = 350;
 
-    scene.add(ambient, dir1, dir2);
+    controls.enablePan = false;
+    controls.screenSpacePanning = false;
 
-    // ---------------- Select Renderer ----------------
-    const { key, renderer: renderFunc } = getRandomRenderer();
-    console.log("🎨 Using renderer:", key);
+    controls.rotateSpeed = 0.8;
+
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.4;
+
+    // ----- Lighting -----
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    d1.position.set(120, 180, 130);
+    scene.add(d1);
+
+    const d2 = new THREE.DirectionalLight(0x88bbff, 0.4);
+    d2.position.set(-120, -90, -100);
+    scene.add(d2);
+
+    // ----- Renderer selection -----
+    // const renderFunc = RENDERERS["golden_spiral"];
+    const { renderer: renderFunc, key } = getRandomRenderer();
+    console.log("🎨 Renderer:", key);
+
+    let updateFn = () => {};
 
     try {
       const result = renderFunc({
-        scene,
+        scene: root,
         vizData,
         THREE,
         disposables,
       });
 
-      if (result?.update) {
-        updateFn = result.update;
-      }
-    } catch (err) {
-      console.error("Renderer error:", err);
+      if (result?.update) updateFn = result.update;
+
+    } catch (e) {
+      console.error("Renderer crashed:", e);
     }
 
     setLoading(false);
 
-    // ---------------- Animation Loop ----------------
+    // ----- Animation -----
     const animate = () => {
       frameId = requestAnimationFrame(animate);
-
       updateFn();
       controls.update();
       renderer.render(scene, camera);
@@ -112,50 +116,34 @@ export default function PatternVisualization({ data }) {
 
     animate();
 
-    // ---------------- Resize ----------------
+    // ----- Resize -----
     const handleResize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
-
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-
     window.addEventListener("resize", handleResize);
 
-    // ---------------- Cleanup ----------------
+    // ----- Cleanup -----
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
-
-      disposables.forEach(
-        (obj) => obj && typeof obj.dispose === "function" && obj.dispose()
-      );
-
-      renderer?.dispose?.();
-      if (renderer?.domElement && mount.contains(renderer.domElement)) {
-        mount.removeChild(renderer.domElement);
-      }
+      disposables.forEach(o => o?.dispose?.());
+      renderer.dispose();
+      mount.removeChild(renderer.domElement);
     };
   }, [data]);
 
   return (
-    <div className="relative w-full h-[600px] bg-paper rounded-sm border border-ink/15 overflow-hidden shadow-lg">
+    <div className="relative w-full h-[600px] bg-paper border rounded">
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-paper/70 backdrop-blur-md z-10">
-          <div className="text-center">
-            <div className="text-4xl mb-2 animate-pulse">✨</div>
-            <p className="text-sm opacity-80">Rendering your pattern…</p>
-          </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-paper/80 backdrop-blur-sm z-10">
+          <p className="text-sm">Rendering…</p>
         </div>
       )}
-
       <div ref={mountRef} className="w-full h-full" />
-
-      <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-sm text-xs opacity-70 border border-ink/10">
-        🖱️ Drag to rotate • Scroll to zoom
-      </div>
     </div>
   );
 }
