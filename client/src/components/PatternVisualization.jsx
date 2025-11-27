@@ -2,19 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-// Pattern renderers (we will create these next, one by one)
-import { renderDataRibbon } from "./renderers/renderDataRibbon";
-import { renderGoldenSpiral } from "./renderers/renderGoldenSpiral";
-import { renderGoldenHelicoid } from "./renderers/renderGoldenHelicoid";
-import { renderVolumeSpiral } from "./renderers/renderVolumeSpiral";
-import { renderNoiseMesh } from "./renderers/renderNoiseMesh";
-import { renderCandleSpiral } from "./renderers/renderCandleSpiral";
+// Only the 3 working renderers
+import { RENDERERS, getRandomRenderer } from "./renderers";
 
 export default function PatternVisualization({ data }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
-  // Basic safety check – we at least need visualization_data
+  // Require visualization_data
   if (!data || !data.visualization_data) {
     return (
       <div className="w-full h-[600px] bg-paper rounded-sm border border-ink/15 flex items-center justify-center">
@@ -30,32 +25,31 @@ export default function PatternVisualization({ data }) {
     const mount = mountRef.current;
     if (!mount) return;
 
-    let frameId;
+    let frameId = null;
     const disposables = [];
-    let renderer;
-    let mainGroup = null;
-    let customUpdate = null;
+    let renderer = null;
+    let updateFn = () => {};
 
     const vizData = data.visualization_data;
-    const patternType = vizData.type || "data_ribbon";
 
-    // ---------------- Scene & Camera ----------------
+    // ---------------- Scene ----------------
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x222233);
 
     const width = mount.clientWidth;
     const height = mount.clientHeight;
 
+    // ---------------- Camera ----------------
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
 
-    // Use camera hint from backend if available
     if (vizData.camera_position) {
       const { x, y, z } = vizData.camera_position;
       camera.position.set(x, y, z);
     } else {
-      camera.position.set(120, 140, 160);
+      camera.position.set(140, 150, 165);
     }
 
+    // ---------------- Renderer ----------------
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -63,72 +57,46 @@ export default function PatternVisualization({ data }) {
     mount.innerHTML = "";
     mount.appendChild(renderer.domElement);
 
+    // ---------------- Controls ----------------
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.4;
+    controls.autoRotateSpeed = 0.35;
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 60;
     controls.maxDistance = 350;
 
-    // Target / look-at
     const look = vizData.camera_look_at || { x: 0, y: 0, z: 0 };
     controls.target.set(look.x, look.y, look.z);
     camera.lookAt(controls.target);
-    controls.update();
 
-    // ---------------- Lighting (shared) ----------------
+    // ---------------- Lighting ----------------
     const ambient = new THREE.AmbientLight(0xffffff, 0.35);
-    const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
     dir1.position.set(120, 200, 150);
+
     const dir2 = new THREE.DirectionalLight(0x88aaff, 0.5);
     dir2.position.set(-100, -60, -100);
+
     scene.add(ambient, dir1, dir2);
 
-    // ---------------- Pattern Dispatch ----------------
-    try {
-      let result;
+    // ---------------- Select Renderer ----------------
+    const { key, renderer: renderFunc } = getRandomRenderer();
+    console.log("🎨 Using renderer:", key);
 
-      const renderProps = {
+    try {
+      const result = renderFunc({
         scene,
         vizData,
         THREE,
-        disposables
-      };
+        disposables,
+      });
 
-      switch (patternType) {
-        case "data_ribbon":
-          result = renderDataRibbon(renderProps);
-          break;
-        case "golden_spiral":
-          result = renderGoldenSpiral(renderProps);
-          break;
-        case "golden_helicoid":
-          result = renderGoldenHelicoid(renderProps);
-          break;
-        case "volume_spiral":
-          result = renderVolumeSpiral(renderProps);
-          break;
-        case "noise_mesh":
-          result = renderNoiseMesh(renderProps);
-          break;
-        case "candle_spiral":
-          result = renderCandleSpiral(renderProps);
-          break;
-        default:
-          // Fallback
-          result = renderDataRibbon(renderProps);
-          break;
+      if (result?.update) {
+        updateFn = result.update;
       }
-
-      if (result && result.group) {
-        mainGroup = result.group;
-      }
-      if (result && typeof result.update === "function") {
-        customUpdate = result.update;
-      }
-    } catch (e) {
-      console.error("Error rendering pattern:", e);
+    } catch (err) {
+      console.error("Renderer error:", err);
     }
 
     setLoading(false);
@@ -137,14 +105,7 @@ export default function PatternVisualization({ data }) {
     const animate = () => {
       frameId = requestAnimationFrame(animate);
 
-      if (mainGroup) {
-        mainGroup.rotation.y += 0.003;
-      }
-
-      if (typeof customUpdate === "function") {
-        customUpdate();
-      }
-
+      updateFn();
       controls.update();
       renderer.render(scene, camera);
     };
@@ -155,10 +116,12 @@ export default function PatternVisualization({ data }) {
     const handleResize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
+
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+
     window.addEventListener("resize", handleResize);
 
     // ---------------- Cleanup ----------------
@@ -166,9 +129,11 @@ export default function PatternVisualization({ data }) {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
 
-      disposables.forEach((obj) => obj && typeof obj.dispose === "function" && obj.dispose());
-      if (renderer) renderer.dispose();
+      disposables.forEach(
+        (obj) => obj && typeof obj.dispose === "function" && obj.dispose()
+      );
 
+      renderer?.dispose?.();
       if (renderer?.domElement && mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
