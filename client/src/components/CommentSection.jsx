@@ -4,41 +4,65 @@ import api from '../api/axios';
 export default function CommentSection({ patternId, comments, onCommentAdded }) {
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState(null);
-  const [replyText, setReplyText] = useState(''); // Separate state for replies!
+  const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const textToPost = replyTo ? replyText : newComment;
     
-    if (!textToPost.trim()) return;
+    console.log('🔍 handleSubmit called');
+    console.log('📝 Text to post:', textToPost);
+    console.log('💬 Reply to:', replyTo);
+    console.log('🆔 Pattern ID:', patternId);
+    console.log('📊 Current state:', { newComment, replyText, replyTo });
+    
+    if (!textToPost.trim()) {
+      console.warn('⚠️ Text is empty, not submitting');
+      return;
+    }
 
     setIsSubmitting(true);
+    console.log('🚀 Starting submission...');
 
     try {
       const token = localStorage.getItem('token');
+      console.log('🔑 Token:', token ? 'exists ✓' : 'MISSING ✗');
+      
+      const payload = {
+        text: textToPost,
+        parentCommentId: replyTo
+      };
+      console.log('📤 Sending payload:', payload);
+      
       const response = await api.post(
         `/patterns/${patternId}/comments`,
-        {
-          text: textToPost,
-          parentCommentId: replyTo
-        },
+        payload,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
 
+      console.log('✅ Response received:', response.data);
+
       if (response.data.success) {
+        console.log('✨ Success! Clearing form and calling onCommentAdded');
         setNewComment('');
         setReplyText('');
         setReplyTo(null);
         onCommentAdded();
+      } else {
+        console.error('❌ Response success was false');
       }
     } catch (error) {
-      console.error('Failed to post comment:', error);
+      console.error('❌ Failed to post comment:', error);
+      console.error('📛 Error message:', error.message);
+      console.error('📛 Error response:', error.response?.data);
+      console.error('📛 Error status:', error.response?.status);
       alert(error.response?.data?.message || 'Failed to post comment');
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Submission complete, isSubmitting set to false');
     }
   };
 
@@ -77,6 +101,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
 
   // Organize comments into nested structure
   const organizeComments = (comments) => {
+    console.log('📋 Organizing comments:', comments);
     const commentMap = {};
     const rootComments = [];
 
@@ -94,6 +119,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       }
     });
 
+    console.log('📊 Root comments:', rootComments.length);
     return rootComments;
   };
 
@@ -139,6 +165,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
 
               <button
                 onClick={() => {
+                  console.log(`🔄 Toggle reply for comment ${comment._id}`);
                   setReplyTo(replyTo === comment._id ? null : comment._id);
                   setReplyText('');
                 }}
@@ -185,6 +212,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
                   <button
                     type="button"
                     onClick={() => {
+                      console.log('❌ Cancel reply clicked');
                       setReplyTo(null);
                       setReplyText('');
                     }}
@@ -213,6 +241,14 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
 
   const organizedComments = organizeComments(comments);
 
+  console.log('🎨 Rendering CommentSection', {
+    patternId,
+    totalComments: comments.length,
+    organizedComments: organizedComments.length,
+    replyTo,
+    showingNewCommentForm: !replyTo
+  });
+
   return (
     <div className="mt-4" onClick={(e) => e.stopPropagation()}>
       <h4 className="font-serif text-lg mb-3">
@@ -220,30 +256,46 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       </h4>
 
       {/* New Comment Form */}
-      {!replyTo && (
-        <form onSubmit={handleSubmit} className="mb-4">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment... (use @username to mention someone)"
-            className="
-              w-full h-20 resize-none px-3 py-2 border border-ink/25
-              outline-none bg-white/70 rounded-sm focus:border-ink text-sm
-            "
-          />
-          <button
-            type="submit"
-            disabled={isSubmitting || !newComment.trim()}
-            className="
-              mt-2 px-4 py-1.5 border border-ink text-sm rounded-sm
-              hover:bg-ink hover:text-paper transition
-              disabled:opacity-50 disabled:cursor-not-allowed
-            "
+      {/* New Comment Form */}
+        {!replyTo && (
+          <form 
+            onSubmit={(e) => {
+              console.log('📋 FORM SUBMIT EVENT FIRED');
+              handleSubmit(e);
+            }} 
+            className="mb-4"
           >
-            {isSubmitting ? 'Posting...' : 'Post Comment'}
-          </button>
-        </form>
-      )}
+            <textarea
+              value={newComment}
+              onChange={(e) => {
+                console.log('✍️ New comment text changed:', e.target.value);
+                setNewComment(e.target.value);
+              }}
+              placeholder="Write a comment... (use @username to mention someone)"
+              className="
+                w-full h-20 resize-none px-3 py-2 border border-ink/25
+                outline-none bg-white/70 rounded-sm focus:border-ink text-sm
+              "
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting || !newComment.trim()}
+              className="
+                mt-2 px-4 py-1.5 border border-ink text-sm rounded-sm
+                hover:bg-ink hover:text-paper transition
+                disabled:opacity-50 disabled:cursor-not-allowed
+              "
+              onClick={(e) => {
+                console.log('🖱️ BUTTON CLICKED');
+                console.log('Is disabled?', isSubmitting || !newComment.trim());
+                console.log('newComment value:', newComment);
+                console.log('isSubmitting:', isSubmitting);
+              }}
+            >
+              {isSubmitting ? 'Posting...' : 'Post Comment'}
+            </button>
+          </form>
+        )}
 
       {/* Comments List */}
       <div className="space-y-3">

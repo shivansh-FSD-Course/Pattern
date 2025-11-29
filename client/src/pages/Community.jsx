@@ -80,7 +80,6 @@ export default function Community() {
         const response = await api.get('/patterns/community');
         if (response.data.success) {
           // Transform the data to match our post structure
-          // Find this section in the fetchPatterns useEffect (around line 86):
 
         const transformedPosts = response.data.patterns.map(pattern => ({
           id: pattern._id,
@@ -237,7 +236,7 @@ export default function Community() {
               fontSize: `${g.size}px`,
               '--rotate': `${g.rotate}deg`,
               '--delay': `${g.delay}s`,
-              transform: `translateY(${scrollY * g.parallaxSpeed * 0.3}px) rotate(${g.rotate}deg)`,
+              transform: `rotate(${g.rotate}deg)`,
             }}
           >
             {g.char}
@@ -457,7 +456,6 @@ export default function Community() {
 function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
   const [isVisible, setIsVisible] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [showReply, setShowReply] = useState(false);
   const cardRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -512,7 +510,13 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
         transitionDelay: isVisible ? `${delay}s` : '0s',
       }}
-      onClick={onExpand}
+      onClick={(e) => {
+        // Don't expand/collapse if clicking inside comment section
+        if (e.target.closest('.comment-section-wrapper')) {
+          return;
+        }
+        onExpand();
+      }}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -622,16 +626,6 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </button>
 
         <button
-          onClick={(e) => { e.stopPropagation(); setShowReply(!showReply); }}
-          className="
-            flex items-center gap-2 px-4 py-2 rounded-sm border border-ink/20
-            hover:bg-ink/5 transition
-          "
-        >
-          <ReplyIcon /> Reply
-        </button>
-
-        <button
           onClick={(e) => { e.stopPropagation(); onSave(post.id); }}
           className={`
             flex items-center gap-2 px-4 py-2 rounded-sm border transition-all
@@ -645,35 +639,24 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </button>
       </div>
 
-      {/* Reply Box */}
-      {showReply && (
-        <div className="mt-4 animate-slide-down" onClick={(e) => e.stopPropagation()}>
-          <textarea
-            placeholder="Write a reply..."
-            className="
-              w-full h-20 resize-none px-3 py-2 border border-ink/25
-              outline-none bg-white/70 rounded-sm focus:border-ink text-sm
-            "
-          />
-          <button className="
-            mt-2 px-4 py-1.5 border border-ink text-sm rounded-sm
-            hover:bg-ink hover:text-paper transition
-          ">
-            Post Reply
-          </button>
-        </div>
-      )}
-
+     
       {/* NEW COMMENT SECTION */}
       {isExpanded && (
-        <CommentSection
-          patternId={post.id}
-          comments={post.comments}
-          onCommentAdded={() => {
-            window.location.reload();
-          }}
-        /> 
+        <div 
+          className="comment-section-wrapper"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <CommentSection
+            patternId={post.id}
+            comments={post.comments}
+            onCommentAdded={() => {
+              window.location.reload();
+            }}
+          /> 
+        </div>
       )}
+    
     </div>
   );
 }
