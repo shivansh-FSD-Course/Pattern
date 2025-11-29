@@ -19,6 +19,15 @@ export default {
           green: "#7BA591",
           rust: "#C75B39",
         },
+        // Add theme colors using CSS variables
+        theme: {
+          primary: "var(--theme-primary)",
+          secondary: "var(--theme-secondary)",
+          accent: "var(--theme-accent)",
+          background: "var(--theme-background)",
+          card: "var(--theme-card)",
+          text: "var(--theme-text)",
+        },
       },
 
       keyframes: {

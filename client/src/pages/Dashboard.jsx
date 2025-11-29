@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import api from "../api/axios";
 import PatternVisualization from "../components/PatternVisualization";
-
+import { THEMES, applyTheme, getSelectedTheme } from '../utils/themes';
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
 // Avatar options
@@ -25,13 +25,6 @@ const AVATAR_COLORS = [
   "#5C8BB8", "#B88B5C", "#5CB88B", "#8B5CB8"
 ];
 
-const THEMES = [
-  { id: "green", name: "Forest", color: "#7BA591" },
-  { id: "gold", name: "Golden", color: "#C9A961" },
-  { id: "purple", name: "Mystic", color: "#8B7BA8" },
-  { id: "blue", name: "Ocean", color: "#5C8BB8" },
-];
-
 const ACHIEVEMENTS = [
   { id: 1, name: "First Discovery", icon: "🌟", unlocked: true, desc: "Upload your first pattern" },
   { id: 2, name: "Pattern Hunter", icon: "🎯", unlocked: true, desc: "Find 10 patterns" },
@@ -44,7 +37,6 @@ export default function Dashboard() {
   const [bio, setBio] = useState("Exploring the mathematical beauty in data...");
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_CHARS[0]);
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
-  const [theme, setTheme] = useState(THEMES[0]);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -53,12 +45,13 @@ export default function Dashboard() {
   const [trails, setTrails] = useState([]);
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
-
+  const [selectedTheme, setSelectedTheme] = useState(getSelectedTheme());
+  
   // Pattern analysis state
   const [analyzedData, setAnalyzedData] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [showVisualization, setShowVisualization] = useState(false);
-  const [patternTitle, setPatternTitle] = useState(""); // ← MOVED INSIDE!
+  const [patternTitle, setPatternTitle] = useState("");
 
   // Sample collection data
   const [myCollection, setMyCollection] = useState([]);
@@ -69,6 +62,17 @@ export default function Dashboard() {
     patternsFound: 47,
     daysActive: 23,
     totalUploads: 12,
+  };
+
+  // Apply theme on mount and when changed
+  useEffect(() => {
+    applyTheme(selectedTheme);
+  }, [selectedTheme]);
+
+  // Handle theme change
+  const handleThemeChange = (themeName) => {
+    setSelectedTheme(themeName);
+    applyTheme(themeName);
   };
 
   /* 
@@ -97,8 +101,8 @@ export default function Dashboard() {
           }
           
           if (user.theme) {
-            const userTheme = THEMES.find(t => t.id === user.theme.id);
-            if (userTheme) setTheme(userTheme);
+            setSelectedTheme(user.theme);
+            applyTheme(user.theme);
           }
         }
       } catch (error) {
@@ -123,11 +127,7 @@ export default function Dashboard() {
           charId: selectedAvatar.id,
           color: avatarColor
         },
-        theme: {
-          id: theme.id,
-          name: theme.name,
-          color: theme.color
-        }
+        theme: selectedTheme
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -148,55 +148,55 @@ export default function Dashboard() {
     setShowAvatarModal(false);
     await handleSaveProfile();
   };
-/* 
-    HELPER: Get pattern thumbnail
-*/
-const getPatternThumbnail = (type) => {
-  const thumbnails = {
-    bitcoin: '₿',
-    stock: '📈',
-    fibonacci: '🌀',
-    golden: '✨',
-    exponential: '🔺',
-    wave: '〰️',
-    chaos: '🌪️',
-    fourier: '📊',
-    other: '✨'
+
+  /* 
+      HELPER: Get pattern thumbnail
+  */
+  const getPatternThumbnail = (type) => {
+    const thumbnails = {
+      bitcoin: '₿',
+      stock: '📈',
+      fibonacci: '🌀',
+      golden: '✨',
+      exponential: '🔺',
+      wave: '〰️',
+      chaos: '🌪️',
+      fourier: '📊',
+      other: '✨'
+    };
+    return thumbnails[type] || '✨';
   };
-  return thumbnails[type] || '✨';
-};
 
-/* 
-    FETCH USER'S PATTERNS FROM DATABASE
-*/
-const fetchMyPatterns = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+  /* 
+      FETCH USER'S PATTERNS FROM DATABASE
+  */
+  const fetchMyPatterns = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-    const res = await api.get('/patterns/my-patterns', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      const res = await api.get('/patterns/my-patterns', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    if (res.data.success) {
-      const transformedPatterns = res.data.patterns.map(pattern => ({
-        id: pattern._id,
-        title: pattern.title,
-        type: pattern.patternType || 'other',
-        date: new Date(pattern.createdAt).toLocaleDateString(),
-        thumbnail: getPatternThumbnail(pattern.patternType),
-        analysisData: pattern.analysisData
-      }));
-      setMyCollection(transformedPatterns);
+      if (res.data.success) {
+        const transformedPatterns = res.data.patterns.map(pattern => ({
+          id: pattern._id,
+          title: pattern.title,
+          type: pattern.patternType || 'other',
+          date: new Date(pattern.createdAt).toLocaleDateString(),
+          thumbnail: getPatternThumbnail(pattern.patternType),
+          analysisData: pattern.analysisData
+        }));
+        setMyCollection(transformedPatterns);
+      }
+      setLoadingCollection(false);
+    } catch (error) {
+      console.error('Failed to fetch patterns:', error);
+      setLoadingCollection(false);
     }
-    setLoadingCollection(false);
-  } catch (error) {
-    console.error('Failed to fetch patterns:', error);
-    setLoadingCollection(false);
-  }
-};
+  };
 
-  /* Mount animation trigger */
   /* Mount animation trigger */
   useEffect(() => {
     setMounted(true);
@@ -228,7 +228,7 @@ const fetchMyPatterns = async () => {
 
   /* 
       FILE UPLOAD & ANALYSIS
- */
+   */
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -313,42 +313,40 @@ const fetchMyPatterns = async () => {
       PUBLISH HANDLER
   */
   const handlePublish = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await api.post('/patterns/publish', {
-      title: patternTitle || uploadedFile.name.replace('.csv', ''),
-      caption: caption,
-      datasetName: uploadedFile.name,
-      patternType: analyzedData.dataset_type || 'other',
-      analysisData: {
-        patterns: analyzedData.patterns,
-        visualization_data: analyzedData.visualization_data,
-        insights: analyzedData.insights
-      }
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await api.post('/patterns/publish', {
+        title: patternTitle || uploadedFile.name.replace('.csv', ''),
+        caption: caption,
+        datasetName: uploadedFile.name,
+        patternType: analyzedData.dataset_type || 'other',
+        analysisData: {
+          patterns: analyzedData.patterns,
+          visualization_data: analyzedData.visualization_data,
+          insights: analyzedData.insights
+        }
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    if (response.data.success) {
-      alert('Pattern published to community! ✨');
-      
-      //  INSTEAD OF RELOAD, REFETCH THE PATTERNS
-      await fetchMyPatterns();
-      
-      // Reset states
-      setShowPublishModal(false);
-      setPatternTitle('');
-      setCaption('');
-      setUploadedFile(null);
-      setAnalyzedData(null);
-      setShowVisualization(false);
+      if (response.data.success) {
+        alert('Pattern published to community! ✨');
+        
+        await fetchMyPatterns();
+        
+        setShowPublishModal(false);
+        setPatternTitle('');
+        setCaption('');
+        setUploadedFile(null);
+        setAnalyzedData(null);
+        setShowVisualization(false);
+      }
+    } catch (error) {
+      console.error('Publish failed:', error);
+      alert('Failed to publish pattern');
     }
-  } catch (error) {
-    console.error('Publish failed:', error);
-    alert('Failed to publish pattern');
-  }
-};
+  };
 
   /* 
       FLOATING GLYPH BACKGROUND
@@ -370,18 +368,21 @@ const fetchMyPatterns = async () => {
 
   return (
     <div 
-      className="relative w-full min-h-screen bg-paper text-ink overflow-y-auto pb-24"
+      className="relative w-full min-h-screen text-ink overflow-y-auto pb-24"
+      style={{ backgroundColor: 'var(--theme-background)' }}
       onMouseMove={handleMouseMove}
     >
       {/* CURSOR TRAIL */}
       {trails.map(trail => (
         <span
           key={trail.id}
-          className="fixed pointer-events-none text-accent-green/30 text-sm animate-trail-fade z-50"
+          className="fixed pointer-events-none text-sm animate-trail-fade z-50"
           style={{ 
             left: trail.x - 10, 
             top: trail.y - 10,
             fontFamily: 'serif',
+            color: 'var(--theme-primary)',
+            opacity: 0.3
           }}
         >
           {trail.char}
@@ -411,7 +412,10 @@ const fetchMyPatterns = async () => {
 
       {/* HEADER */}
       <header className="relative z-10 px-10 pt-14 pb-6">
-        <h1 className="font-serif text-[46px] tracking-wide">
+        <h1 
+          className="font-serif text-[46px] tracking-wide"
+          style={{ color: 'var(--theme-primary)' }}
+        >
           My Space
         </h1>
       </header>
@@ -429,10 +433,11 @@ const fetchMyPatterns = async () => {
         >
           {/* PROFILE CARD */}
           <div
-            className="
-              bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-              shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-            "
+            className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '20'
+            }}
           >
             {/* AVATAR */}
             <div className="flex flex-col items-center mb-6">
@@ -441,46 +446,76 @@ const fetchMyPatterns = async () => {
                 className="
                   relative w-28 h-28 rounded-full flex items-center justify-center
                   font-serif text-5xl transition-all hover:scale-105
-                  border-4 border-white shadow-lg
+                  border-4 shadow-lg
                 "
-                style={{ backgroundColor: avatarColor }}
+                style={{ 
+                  backgroundColor: avatarColor,
+                  borderColor: 'var(--theme-accent)'
+                }}
               >
                 {selectedAvatar.char}
-                <div className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md">
+                <div 
+                  className="absolute bottom-0 right-0 rounded-full p-1.5 shadow-md"
+                  style={{ backgroundColor: 'var(--theme-card)' }}
+                >
                   <EditIcon />
                 </div>
               </button>
-              <h3 className="font-serif text-xl mt-3">{username}</h3>
+              <h3 
+                className="font-serif text-xl mt-3"
+                style={{ color: 'var(--theme-text)' }}
+              >
+                {username}
+              </h3>
             </div>
 
             <label className="text-sm opacity-70">Username</label>
             <input
               className="
-                mt-1 w-full border border-ink/25 rounded-sm px-3 py-2
-                focus:border-ink outline-none bg-white/70
-                transition
+                mt-1 w-full rounded-sm px-3 py-2
+                outline-none transition border
               "
+              style={{
+                backgroundColor: 'var(--theme-background)',
+                borderColor: 'var(--theme-primary)' + '40'
+              }}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--theme-primary)' + '40'}
             />
 
             <label className="text-sm opacity-70 mt-4 block">Bio</label>
             <textarea
               className="
-                mt-1 w-full h-24 border border-ink/25 rounded-sm px-3 py-2
-                resize-none bg-white/70 outline-none
-                focus:border-ink
+                mt-1 w-full h-24 rounded-sm px-3 py-2
+                resize-none outline-none border
               "
+              style={{
+                backgroundColor: 'var(--theme-background)',
+                borderColor: 'var(--theme-primary)' + '40'
+              }}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
+              onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--theme-primary)' + '40'}
             />
 
             <button
               onClick={handleSaveProfile}
-              className="
-                mt-4 w-full border border-ink rounded-sm px-6 py-2 text-sm
-                hover:bg-ink hover:text-paper transition
-              "
+              className="mt-4 w-full rounded-sm px-6 py-2 text-sm transition border"
+              style={{
+                borderColor: 'var(--theme-primary)',
+                color: 'var(--theme-primary)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--theme-primary)';
+                e.target.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = 'var(--theme-primary)';
+              }}
             >
               Save Changes
             </button>
@@ -490,12 +525,18 @@ const fetchMyPatterns = async () => {
           <div className="md:col-span-2 space-y-6">
             {/* STATS */}
             <div
-              className="
-                bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-                shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-              "
+              className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+              style={{ 
+                backgroundColor: 'var(--theme-card)',
+                borderColor: 'var(--theme-primary)' + '20'
+              }}
             >
-              <h2 className="font-serif text-2xl mb-4">Your Statistics</h2>
+              <h2 
+                className="font-serif text-2xl mb-4"
+                style={{ color: 'var(--theme-primary)' }}
+              >
+                Your Statistics
+              </h2>
               <div className="grid grid-cols-3 gap-4">
                 <StatCard value={stats.patternsFound} label="Patterns Found" />
                 <StatCard value={stats.daysActive} label="Days Active" />
@@ -505,28 +546,35 @@ const fetchMyPatterns = async () => {
 
             {/* THEME SELECTOR */}
             <div
-              className="
-                bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-                shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-              "
+              className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+              style={{ 
+                backgroundColor: 'var(--theme-card)',
+                borderColor: 'var(--theme-primary)' + '20'
+              }}
             >
-              <h2 className="font-serif text-2xl mb-4">Theme</h2>
-              <div className="flex gap-3">
-                {THEMES.map(t => (
+              <h3 
+                className="font-serif text-[22px] mb-4"
+                style={{ color: 'var(--theme-primary)' }}
+              >
+                Theme
+              </h3>
+              <div className="grid grid-cols-4 gap-3">
+                {Object.entries(THEMES).map(([key, theme]) => (
                   <button
-                    key={t.id}
-                    onClick={() => setTheme(t)}
-                    className={`
-                      px-4 py-2 rounded-sm border-2 transition-all
-                      ${theme.id === t.id ? 'border-ink scale-105' : 'border-ink/20'}
-                    `}
-                    style={{ backgroundColor: t.color + '40' }}
+                    key={key}
+                    onClick={() => handleThemeChange(key)}
+                    className="p-4 rounded-sm border-2 transition-all"
+                    style={{
+                      borderColor: selectedTheme === key ? 'var(--theme-primary)' : '#E5E5E5',
+                      transform: selectedTheme === key ? 'scale(1.05)' : 'scale(1)',
+                      boxShadow: selectedTheme === key ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                    }}
                   >
                     <div 
-                      className="w-6 h-6 rounded-full mx-auto mb-1"
-                      style={{ backgroundColor: t.color }}
+                      className="w-12 h-12 rounded-full mx-auto mb-2"
+                      style={{ backgroundColor: theme.primary }}
                     />
-                    <span className="text-xs">{t.name}</span>
+                    <p className="text-sm font-medium">{theme.name}</p>
                   </button>
                 ))}
               </div>
@@ -534,26 +582,36 @@ const fetchMyPatterns = async () => {
 
             {/* ACHIEVEMENTS */}
             <div
-              className="
-                bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-                shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-              "
+              className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+              style={{ 
+                backgroundColor: 'var(--theme-card)',
+                borderColor: 'var(--theme-primary)' + '20'
+              }}
             >
-              <h2 className="font-serif text-2xl mb-4">Achievements</h2>
+              <h2 
+                className="font-serif text-2xl mb-4"
+                style={{ color: 'var(--theme-primary)' }}
+              >
+                Achievements
+              </h2>
               <div className="grid grid-cols-2 gap-3">
                 {ACHIEVEMENTS.map(achievement => (
                   <div
                     key={achievement.id}
-                    className={`
-                      p-3 rounded-sm border transition-all
-                      ${achievement.unlocked 
-                        ? 'bg-white/70 border-ink/20' 
-                        : 'bg-white/30 border-ink/10 opacity-50'
-                      }
-                    `}
+                    className="p-3 rounded-sm border transition-all"
+                    style={{
+                      backgroundColor: achievement.unlocked ? 'var(--theme-background)' : 'rgba(255,255,255,0.3)',
+                      borderColor: achievement.unlocked ? 'var(--theme-primary)' + '30' : 'rgba(0,0,0,0.1)',
+                      opacity: achievement.unlocked ? 1 : 0.5
+                    }}
                   >
                     <div className="text-2xl mb-1">{achievement.icon}</div>
-                    <div className="text-sm font-semibold">{achievement.name}</div>
+                    <div 
+                      className="text-sm font-semibold"
+                      style={{ color: achievement.unlocked ? 'var(--theme-primary)' : 'inherit' }}
+                    >
+                      {achievement.name}
+                    </div>
                     <div className="text-xs opacity-60">{achievement.desc}</div>
                   </div>
                 ))}
@@ -570,25 +628,30 @@ const fetchMyPatterns = async () => {
           `}
         >
           <div
-            className="
-              bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-              shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-            "
+            className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '20'
+            }}
           >
-            <h2 className="font-serif text-[28px] mb-4">Upload Dataset</h2>
+            <h2 
+              className="font-serif text-[28px] mb-4"
+              style={{ color: 'var(--theme-primary)' }}
+            >
+              Upload Dataset
+            </h2>
 
             {/* DRAG & DROP ZONE */}
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`
-                border-2 border-dashed rounded-sm p-8 text-center transition-all
-                ${isDragging 
-                  ? 'border-accent-green bg-accent-green/10 scale-[1.02]' 
-                  : 'border-ink/25 bg-white/40'
-                }
-              `}
+              className="border-2 border-dashed rounded-sm p-8 text-center transition-all"
+              style={{
+                borderColor: isDragging ? 'var(--theme-primary)' : 'var(--theme-primary)' + '40',
+                backgroundColor: isDragging ? 'var(--theme-primary)' + '10' : 'var(--theme-background)',
+                transform: isDragging ? 'scale(1.02)' : 'scale(1)'
+              }}
             >
               <UploadIcon className="mx-auto mb-3" />
               <p className="text-sm opacity-70 mb-2">
@@ -596,10 +659,21 @@ const fetchMyPatterns = async () => {
               </p>
               <p className="text-xs opacity-50 mb-4">or</p>
               
-              <label className="
-                inline-block border border-ink rounded-sm px-6 py-2 text-sm
-                hover:bg-ink hover:text-paper transition cursor-pointer
-              ">
+              <label 
+                className="inline-block rounded-sm px-6 py-2 text-sm transition cursor-pointer border"
+                style={{
+                  borderColor: 'var(--theme-primary)',
+                  color: 'var(--theme-primary)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'var(--theme-primary)';
+                  e.target.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                  e.target.style.color = 'var(--theme-primary)';
+                }}
+              >
                 Browse Files
                 <input
                   type="file"
@@ -612,16 +686,38 @@ const fetchMyPatterns = async () => {
 
             {/* ANALYZING STATE */}
             {analyzing && (
-              <div className="mt-6 p-6 bg-white/70 rounded-sm border border-ink/15 text-center">
-                <div className="text-4xl mb-3 animate-pulse">⚡</div>
-                <p className="text-lg font-serif mb-1">Analyzing patterns...</p>
+              <div 
+                className="mt-6 p-6 rounded-sm border text-center"
+                style={{ 
+                  backgroundColor: 'var(--theme-background)',
+                  borderColor: 'var(--theme-primary)' + '30'
+                }}
+              >
+                <div 
+                  className="text-4xl mb-3 animate-pulse"
+                  style={{ filter: 'hue-rotate(0deg)' }}
+                >
+                  ⚡
+                </div>
+                <p 
+                  className="text-lg font-serif mb-1"
+                  style={{ color: 'var(--theme-primary)' }}
+                >
+                  Analyzing patterns...
+                </p>
                 <p className="text-xs opacity-60">Detecting Fibonacci levels, golden ratios, and market cycles</p>
               </div>
             )}
 
             {/* FILE UPLOADED */}
             {uploadedFile && !analyzing && !showVisualization && (
-              <div className="mt-6 p-4 bg-white/70 rounded-sm border border-ink/15">
+              <div 
+                className="mt-6 p-4 rounded-sm border"
+                style={{ 
+                  backgroundColor: 'var(--theme-background)',
+                  borderColor: 'var(--theme-primary)' + '30'
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">📊</div>
@@ -637,12 +733,32 @@ const fetchMyPatterns = async () => {
 
           {/* VISUALIZATION RESULTS */}
           {showVisualization && analyzedData && (
-            <div className="mt-8 bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15 shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6">
-              <h2 className="font-serif text-[32px] mb-6">Pattern Analysis Results</h2>
+            <div 
+              className="mt-8 backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+              style={{ 
+                backgroundColor: 'var(--theme-card)',
+                borderColor: 'var(--theme-primary)' + '20'
+              }}
+            >
+              <h2 
+                className="font-serif text-[32px] mb-6"
+                style={{ color: 'var(--theme-primary)' }}
+              >
+                Pattern Analysis Results
+              </h2>
               
               {/* Insights Panel */}
-              <div className="bg-gradient-to-r from-accent-green/10 to-accent-gold/10 p-6 rounded-sm mb-6 border border-ink/10">
-                <h3 className="font-serif text-xl mb-4 flex items-center gap-2">
+              <div 
+                className="p-6 rounded-sm mb-6 border"
+                style={{
+                  background: `linear-gradient(to right, var(--theme-primary)15, var(--theme-accent)15)`,
+                  borderColor: 'var(--theme-primary)' + '20'
+                }}
+              >
+                <h3 
+                  className="font-serif text-xl mb-4 flex items-center gap-2"
+                  style={{ color: 'var(--theme-primary)' }}
+                >
                   <span>🔍</span> Key Discoveries
                 </h3>
                 <div className="space-y-2">
@@ -659,10 +775,19 @@ const fetchMyPatterns = async () => {
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={() => setShowPublishModal(true)}
-                  className="
-                    flex-1 border border-ink rounded-sm px-6 py-3 text-sm font-medium
-                    hover:bg-ink hover:text-paper transition
-                  "
+                  className="flex-1 rounded-sm px-6 py-3 text-sm font-medium transition border"
+                  style={{
+                    borderColor: 'var(--theme-primary)',
+                    color: 'var(--theme-primary)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'var(--theme-primary)';
+                    e.target.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.color = 'var(--theme-primary)';
+                  }}
                 >
                   📤 Publish to Community
                 </button>
@@ -672,10 +797,16 @@ const fetchMyPatterns = async () => {
                     setAnalyzedData(null);
                     setUploadedFile(null);
                   }}
-                  className="
-                    border border-ink/30 rounded-sm px-6 py-3 text-sm
-                    hover:bg-ink/5 transition
-                  "
+                  className="border rounded-sm px-6 py-3 text-sm transition"
+                  style={{
+                    borderColor: 'var(--theme-primary)' + '50'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'var(--theme-primary)' + '10';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
                 >
                   Upload Another Dataset
                 </button>
@@ -684,93 +815,97 @@ const fetchMyPatterns = async () => {
           )}
         </div>
 
-          {/* MY COLLECTION */}
-          <div 
-            className={`
-              transition-all duration-700 delay-300
-              ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-            `}
+        {/* MY COLLECTION */}
+        <div 
+          className={`
+            transition-all duration-700 delay-300
+            ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+          `}
+        >
+          <div
+            className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '20'
+            }}
           >
-            <div
-              className="
-                bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-                shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-              "
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-serif text-[28px]">My Collection</h2>
-                
-                {/* Delete All Button */}
-                {myCollection.length > 0 && (
-                  <button
-                    onClick={async () => {
-                      if (!confirm(`Delete ALL ${myCollection.length} patterns? This cannot be undone!`)) return;
+            <div className="flex justify-between items-center mb-6">
+              <h2 
+                className="font-serif text-[28px]"
+                style={{ color: 'var(--theme-primary)' }}
+              >
+                My Collection
+              </h2>
+              
+              {/* Delete All Button */}
+              {myCollection.length > 0 && (
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Delete ALL ${myCollection.length} patterns? This cannot be undone!`)) return;
+                    
+                    try {
+                      const token = localStorage.getItem('token');
+                      let successCount = 0;
+                      let failCount = 0;
                       
-                      try {
-                        const token = localStorage.getItem('token');
-                        let successCount = 0;
-                        let failCount = 0;
-                        
-                        // Delete all patterns
-                        for (const pattern of myCollection) {
-                          try {
-                            await api.delete(`/patterns/${pattern.id}`, {
-                              headers: { Authorization: `Bearer ${token}` }
-                            });
-                            successCount++;
-                          } catch (err) {
-                            console.error(`Failed to delete ${pattern.id}:`, err);
-                            failCount++;
-                          }
+                      for (const pattern of myCollection) {
+                        try {
+                          await api.delete(`/patterns/${pattern.id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          successCount++;
+                        } catch (err) {
+                          console.error(`Failed to delete ${pattern.id}:`, err);
+                          failCount++;
                         }
-                        
-                        if (successCount > 0) {
-                          alert(`Deleted ${successCount} patterns!`);
-                          setMyCollection([]); // Clear the collection
-                        }
-                        if (failCount > 0) {
-                          alert(`Failed to delete ${failCount} patterns. Backend route might be missing.`);
-                        }
-                      } catch (error) {
-                        console.error('Failed to delete all:', error);
-                        alert('Failed to delete patterns');
                       }
-                    }}
-                    className="text-xs px-4 py-2 border border-red-500/50 text-red-600 rounded-sm hover:bg-red-500 hover:text-white transition"
-                  >
-                    🗑️ Delete All ({myCollection.length})
-                  </button>
-                )}
-              </div>
-
-              {loadingCollection ? (
-                <div className="text-center py-12 opacity-60">
-                  <div className="text-5xl mb-3 animate-pulse">⏳</div>
-                  <p className="font-serif text-lg">Loading your patterns...</p>
-                </div>
-              ) : myCollection.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {myCollection.map((item, index) => (
-                    <CollectionCard 
-                      key={item.id} 
-                      item={item} 
-                      delay={index * 0.1}
-                      onDelete={(deletedId) => {
-                        // Remove from state without reloading
-                        setMyCollection(myCollection.filter(p => p.id !== deletedId));
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 opacity-60">
-                  <div className="text-5xl mb-3">🔍</div>
-                  <p className="font-serif text-lg">No patterns yet</p>
-                  <p className="text-sm">Upload your first dataset to begin!</p>
-                </div>
+                      
+                      if (successCount > 0) {
+                        alert(`Deleted ${successCount} patterns!`);
+                        setMyCollection([]);
+                      }
+                      if (failCount > 0) {
+                        alert(`Failed to delete ${failCount} patterns.`);
+                      }
+                    } catch (error) {
+                      console.error('Failed to delete all:', error);
+                      alert('Failed to delete patterns');
+                    }
+                  }}
+                  className="text-xs px-4 py-2 border border-red-500/50 text-red-600 rounded-sm hover:bg-red-500 hover:text-white transition"
+                >
+                  🗑️ Delete All ({myCollection.length})
+                </button>
               )}
             </div>
+
+            {loadingCollection ? (
+              <div className="text-center py-12 opacity-60">
+                <div className="text-5xl mb-3 animate-pulse">⏳</div>
+                <p className="font-serif text-lg">Loading your patterns...</p>
+              </div>
+            ) : myCollection.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {myCollection.map((item, index) => (
+                  <CollectionCard 
+                    key={item.id} 
+                    item={item} 
+                    delay={index * 0.1}
+                    onDelete={(deletedId) => {
+                      setMyCollection(myCollection.filter(p => p.id !== deletedId));
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 opacity-60">
+                <div className="text-5xl mb-3">🔍</div>
+                <p className="font-serif text-lg">No patterns yet</p>
+                <p className="text-sm">Upload your first dataset to begin!</p>
+              </div>
+            )}
           </div>
+        </div>
 
       </div>
 
@@ -785,15 +920,17 @@ const fetchMyPatterns = async () => {
           onClick={() => setShowAvatarModal(false)}
         >
           <div
-            className="
-              bg-white/80 backdrop-blur-md border border-ink/20 p-8 rounded-sm
-              shadow-[0_8px_32px_rgba(0,0,0,0.22)]
-              max-w-[520px] w-full
-              animate-slide-up
-            "
+            className="backdrop-blur-md border p-8 rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] max-w-[520px] w-full animate-slide-up"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '40'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-serif text-[26px] mb-6 text-center">
+            <h3 
+              className="font-serif text-[26px] mb-6 text-center"
+              style={{ color: 'var(--theme-primary)' }}
+            >
               Choose Your Avatar
             </h3>
 
@@ -805,15 +942,12 @@ const fetchMyPatterns = async () => {
                   <button
                     key={avatar.id}
                     onClick={() => setSelectedAvatar(avatar)}
-                    className={`
-                      aspect-square rounded-full flex items-center justify-center
-                      font-serif text-2xl transition-all border-2
-                      ${selectedAvatar.id === avatar.id 
-                        ? 'border-ink scale-110' 
-                        : 'border-ink/20 hover:scale-105'
-                      }
-                    `}
-                    style={{ backgroundColor: avatarColor + '40' }}
+                    className="aspect-square rounded-full flex items-center justify-center font-serif text-2xl transition-all border-2"
+                    style={{
+                      backgroundColor: avatarColor + '40',
+                      borderColor: selectedAvatar.id === avatar.id ? 'var(--theme-primary)' : 'rgba(0,0,0,0.2)',
+                      transform: selectedAvatar.id === avatar.id ? 'scale(1.1)' : 'scale(1)'
+                    }}
                   >
                     {avatar.char}
                   </button>
@@ -829,14 +963,12 @@ const fetchMyPatterns = async () => {
                   <button
                     key={color}
                     onClick={() => setAvatarColor(color)}
-                    className={`
-                      w-10 h-10 rounded-full transition-all border-2
-                      ${avatarColor === color 
-                        ? 'border-ink scale-110' 
-                        : 'border-white hover:scale-105'
-                      }
-                    `}
-                    style={{ backgroundColor: color }}
+                    className="w-10 h-10 rounded-full transition-all border-2"
+                    style={{
+                      backgroundColor: color,
+                      borderColor: avatarColor === color ? 'var(--theme-primary)' : 'white',
+                      transform: avatarColor === color ? 'scale(1.1)' : 'scale(1)'
+                    }}
                   />
                 ))}
               </div>
@@ -846,11 +978,11 @@ const fetchMyPatterns = async () => {
             <div className="flex flex-col items-center mb-6">
               <p className="text-sm opacity-70 mb-3">Preview</p>
               <div
-                className="
-                  w-24 h-24 rounded-full flex items-center justify-center
-                  font-serif text-4xl border-4 border-white shadow-lg
-                "
-                style={{ backgroundColor: avatarColor }}
+                className="w-24 h-24 rounded-full flex items-center justify-center font-serif text-4xl border-4 shadow-lg"
+                style={{ 
+                  backgroundColor: avatarColor,
+                  borderColor: 'var(--theme-accent)'
+                }}
               >
                 {selectedAvatar.char}
               </div>
@@ -858,10 +990,19 @@ const fetchMyPatterns = async () => {
 
             <button
               onClick={handleAvatarSave}
-              className="
-                w-full border border-ink rounded-sm px-6 py-3 text-sm
-                hover:bg-ink hover:text-paper transition
-              "
+              className="w-full rounded-sm px-6 py-3 text-sm transition border"
+              style={{
+                borderColor: 'var(--theme-primary)',
+                color: 'var(--theme-primary)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--theme-primary)';
+                e.target.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = 'var(--theme-primary)';
+              }}
             >
               Save Avatar
             </button>
@@ -880,63 +1021,81 @@ const fetchMyPatterns = async () => {
           onClick={() => setShowPublishModal(false)}
         >
           <div
-            className="
-              bg-white/80 backdrop-blur-md border border-ink/20 p-6 rounded-sm
-              shadow-[0_8px_32px_rgba(0,0,0,0.22)]
-              max-w-[480px] w-full
-              animate-slide-up
-            "
+            className="backdrop-blur-md border p-6 rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] max-w-[480px] w-full animate-slide-up"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '40'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-serif text-[26px] mb-4">
+            <h3 
+              className="font-serif text-[26px] mb-4"
+              style={{ color: 'var(--theme-primary)' }}
+            >
               Publish to Community
             </h3>
 
-            <div className="mb-4 p-4 bg-white/70 rounded-sm">
+            <div 
+              className="mb-4 p-4 rounded-sm"
+              style={{ backgroundColor: 'var(--theme-background)' }}
+            >
               <p className="text-sm font-semibold mb-1">📊 {uploadedFile?.name}</p>
               <p className="text-xs opacity-60">Pattern analysis complete!</p>
             </div>
 
-            {/* Title Input */}
             <input
               type="text"
-              className="
-                w-full border border-ink/25 rounded-sm px-3 py-2 mb-3
-                bg-white/70 outline-none focus:border-ink
-              "
+              className="w-full border rounded-sm px-3 py-2 mb-3 outline-none"
+              style={{
+                backgroundColor: 'var(--theme-background)',
+                borderColor: 'var(--theme-primary)' + '40'
+              }}
               placeholder="Give your discovery a title..."
               value={patternTitle}
               onChange={(e) => setPatternTitle(e.target.value)}
+              onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--theme-primary)' + '40'}
             />
 
-            {/* Caption Input */}
             <textarea
-              className="
-                w-full h-24 border border-ink/25 rounded-sm px-3 py-2 resize-none
-                bg-white/70 outline-none focus:border-ink
-              "
+              className="w-full h-24 border rounded-sm px-3 py-2 resize-none outline-none"
+              style={{
+                backgroundColor: 'var(--theme-background)',
+                borderColor: 'var(--theme-primary)' + '40'
+              }}
               placeholder="Add a caption or description..."
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
+              onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--theme-primary)' + '40'}
             />
 
             <div className="flex justify-end gap-3 mt-5">
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="
-                  px-5 py-2 rounded-sm text-sm border border-ink/30
-                  hover:bg-ink/5 transition
-                "
+                className="px-5 py-2 rounded-sm text-sm border transition"
+                style={{ borderColor: 'var(--theme-primary)' + '50' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--theme-primary)' + '10'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
               >
                 Cancel
               </button>
 
               <button
                 onClick={handlePublish}
-                className="
-                  border border-ink px-6 py-2 rounded-sm text-sm
-                  hover:bg-ink hover:text-paper transition
-                "
+                className="border px-6 py-2 rounded-sm text-sm transition"
+                style={{
+                  borderColor: 'var(--theme-primary)',
+                  color: 'var(--theme-primary)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'var(--theme-primary)';
+                  e.target.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                  e.target.style.color = 'var(--theme-primary)';
+                }}
               >
                 Publish
               </button>
@@ -994,8 +1153,15 @@ function StatCard({ value, label }) {
   }, [value, hasAnimated]);
 
   return (
-    <div ref={cardRef} className="text-center p-4 bg-white/50 rounded-sm">
-      <div className="font-serif text-3xl text-accent-green mb-1">
+    <div 
+      ref={cardRef} 
+      className="text-center p-4 rounded-sm"
+      style={{ backgroundColor: 'var(--theme-background)' }}
+    >
+      <div 
+        className="font-serif text-3xl mb-1"
+        style={{ color: 'var(--theme-primary)' }}
+      >
         {count}
       </div>
       <div className="text-xs opacity-60 uppercase tracking-wide">{label}</div>
@@ -1046,12 +1212,11 @@ function CollectionCard({ item, delay, onDelete }) {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Call parent's onDelete to refresh the list
       onDelete(item.id);
       alert('Pattern deleted! ✓');
     } catch (error) {
       console.error('Delete failed:', error);
-      alert(error.response?.data?.message || 'Failed to delete pattern. Check if the backend route exists.');
+      alert(error.response?.data?.message || 'Failed to delete pattern.');
     }
   };
 
@@ -1067,25 +1232,26 @@ function CollectionCard({ item, delay, onDelete }) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`
-          relative bg-white/70 rounded-sm border border-ink/15 p-4
+          relative rounded-sm border p-4
           hover:shadow-lg transition-all duration-500 cursor-pointer
           ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
         `}
         style={{
+          backgroundColor: 'var(--theme-background)',
+          borderColor: 'var(--theme-primary)' + '30',
           transitionDelay: isVisible ? `${delay}s` : '0s',
         }}
       >
-        {/* Thumbnail */}
         <div className="text-5xl text-center mb-3">{item.thumbnail}</div>
         
-        {/* Info */}
         <h4 className="font-serif text-sm mb-1 line-clamp-2">{item.title}</h4>
         <p className="text-xs opacity-60 mb-1">{item.type}</p>
         <p className="text-xs opacity-40">{item.date}</p>
 
-        {/* Hover Actions */}
         {isHovered && (
-          <div className="absolute inset-0 bg-ink/90 rounded-sm flex items-center justify-center gap-3 animate-fade-in">
+          <div className="absolute inset-0 rounded-sm flex items-center justify-center gap-3 animate-fade-in"
+            style={{ backgroundColor: 'var(--theme-primary)' + 'E6' }}
+          >
             <button 
               onClick={handleView}
               className="text-white text-xs px-3 py-1.5 border border-white/30 rounded-sm hover:bg-white/10 transition"
@@ -1102,18 +1268,26 @@ function CollectionCard({ item, delay, onDelete }) {
         )}
       </div>
 
-      {/* View Modal */}
       {showVisualization && item.analysisData && (
         <div
           className="fixed inset-0 bg-[rgba(0,0,0,0.7)] backdrop-blur-sm flex justify-center items-center z-[999] px-6 animate-fade-in"
           onClick={() => setShowVisualization(false)}
         >
           <div
-            className="bg-white/90 backdrop-blur-md border border-ink/20 p-6 rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] max-w-[900px] w-full max-h-[90vh] overflow-y-auto animate-slide-up"
+            className="backdrop-blur-md border p-6 rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] max-w-[900px] w-full max-h-[90vh] overflow-y-auto animate-slide-up"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '40'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
-              <h3 className="font-serif text-[26px]">{item.title}</h3>
+              <h3 
+                className="font-serif text-[26px]"
+                style={{ color: 'var(--theme-primary)' }}
+              >
+                {item.title}
+              </h3>
               <button
                 onClick={() => setShowVisualization(false)}
                 className="text-2xl hover:opacity-70 transition"
@@ -1122,10 +1296,18 @@ function CollectionCard({ item, delay, onDelete }) {
               </button>
             </div>
 
-            {/* Insights */}
             {item.analysisData.insights && (
-              <div className="bg-gradient-to-r from-accent-green/10 to-accent-gold/10 p-4 rounded-sm mb-4 border border-ink/10">
-                <h4 className="font-serif text-lg mb-3 flex items-center gap-2">
+              <div 
+                className="p-4 rounded-sm mb-4 border"
+                style={{
+                  background: `linear-gradient(to right, var(--theme-primary)15, var(--theme-accent)15)`,
+                  borderColor: 'var(--theme-primary)' + '20'
+                }}
+              >
+                <h4 
+                  className="font-serif text-lg mb-3 flex items-center gap-2"
+                  style={{ color: 'var(--theme-primary)' }}
+                >
                   <span>🔍</span> Key Discoveries
                 </h4>
                 <div className="space-y-2">
@@ -1136,7 +1318,6 @@ function CollectionCard({ item, delay, onDelete }) {
               </div>
             )}
 
-            {/* Visualization */}
             <PatternVisualization data={item.analysisData} />
           </div>
         </div>

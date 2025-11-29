@@ -34,7 +34,14 @@ body::before {
     rgba(0,0,0,0.025) 2px 4px
   );
 }
-
+:root {
+  --theme-primary: #7BA591;
+  --theme-secondary: #5C8B7B;
+  --theme-accent: #9BC4B5;
+  --theme-background: #F5F7F6;
+  --theme-card: #FFFFFF;
+  --theme-text: #2C3E3A;
+}
 /* 
     INTRO PAGE ANIMATIONS
  */
