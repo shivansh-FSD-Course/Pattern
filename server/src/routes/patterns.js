@@ -6,6 +6,7 @@ import {
   publishPattern, 
   getCommunityPatterns,
   getUserPatterns,
+  deletePattern,
   likePattern,
   addComment,      
   deleteComment,   
@@ -43,6 +44,7 @@ router.post('/analyze', protect, upload.single('file'), analyzePattern);
 router.post('/publish', protect, publishPattern);
 router.get('/community', getCommunityPatterns);
 router.get('/my-patterns', protect, getUserPatterns);
+router.delete('/:id', protect, deletePattern);
 router.post('/:patternId/like', protect, likePattern);
 
 // Comment routes

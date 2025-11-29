@@ -684,41 +684,93 @@ const fetchMyPatterns = async () => {
           )}
         </div>
 
-        {/* MY COLLECTION */}
-        <div 
-          className={`
-            transition-all duration-700 delay-300
-            ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-          `}
-        >
-          <div
-            className="
-              bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
-              shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
-            "
+          {/* MY COLLECTION */}
+          <div 
+            className={`
+              transition-all duration-700 delay-300
+              ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+            `}
           >
-            <h2 className="font-serif text-[28px] mb-6">My Collection</h2>
+            <div
+              className="
+                bg-white/65 backdrop-blur-sm rounded-sm border border-ink/15
+                shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6
+              "
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-serif text-[28px]">My Collection</h2>
+                
+                {/* Delete All Button */}
+                {myCollection.length > 0 && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Delete ALL ${myCollection.length} patterns? This cannot be undone!`)) return;
+                      
+                      try {
+                        const token = localStorage.getItem('token');
+                        let successCount = 0;
+                        let failCount = 0;
+                        
+                        // Delete all patterns
+                        for (const pattern of myCollection) {
+                          try {
+                            await api.delete(`/patterns/${pattern.id}`, {
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            successCount++;
+                          } catch (err) {
+                            console.error(`Failed to delete ${pattern.id}:`, err);
+                            failCount++;
+                          }
+                        }
+                        
+                        if (successCount > 0) {
+                          alert(`Deleted ${successCount} patterns!`);
+                          setMyCollection([]); // Clear the collection
+                        }
+                        if (failCount > 0) {
+                          alert(`Failed to delete ${failCount} patterns. Backend route might be missing.`);
+                        }
+                      } catch (error) {
+                        console.error('Failed to delete all:', error);
+                        alert('Failed to delete patterns');
+                      }
+                    }}
+                    className="text-xs px-4 py-2 border border-red-500/50 text-red-600 rounded-sm hover:bg-red-500 hover:text-white transition"
+                  >
+                    🗑️ Delete All ({myCollection.length})
+                  </button>
+                )}
+              </div>
 
-            {loadingCollection ? (
-              <div className="text-center py-12 opacity-60">
-                <div className="text-5xl mb-3 animate-pulse">⏳</div>
-                <p className="font-serif text-lg">Loading your patterns...</p>
-              </div>
-            ) : myCollection.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {myCollection.map((item, index) => (
-                  <CollectionCard key={item.id} item={item} delay={index * 0.1} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 opacity-60">
-                <div className="text-5xl mb-3">🔍</div>
-                <p className="font-serif text-lg">No patterns yet</p>
-                <p className="text-sm">Upload your first dataset to begin!</p>
-              </div>
-            )}
+              {loadingCollection ? (
+                <div className="text-center py-12 opacity-60">
+                  <div className="text-5xl mb-3 animate-pulse">⏳</div>
+                  <p className="font-serif text-lg">Loading your patterns...</p>
+                </div>
+              ) : myCollection.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {myCollection.map((item, index) => (
+                    <CollectionCard 
+                      key={item.id} 
+                      item={item} 
+                      delay={index * 0.1}
+                      onDelete={(deletedId) => {
+                        // Remove from state without reloading
+                        setMyCollection(myCollection.filter(p => p.id !== deletedId));
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 opacity-60">
+                  <div className="text-5xl mb-3">🔍</div>
+                  <p className="font-serif text-lg">No patterns yet</p>
+                  <p className="text-sm">Upload your first dataset to begin!</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
       </div>
 
@@ -954,9 +1006,10 @@ function StatCard({ value, label }) {
 /* 
       COLLECTION CARD COMPONENT
  */
-function CollectionCard({ item, delay }) {
+function CollectionCard({ item, delay, onDelete }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showVisualization, setShowVisualization] = useState(false);
   const cardRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -980,43 +1033,115 @@ function CollectionCard({ item, delay }) {
     };
   }, []);
 
-  return (
-    <div
-      ref={cardRef}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`
-        relative bg-white/70 rounded-sm border border-ink/15 p-4
-        hover:shadow-lg transition-all duration-500 cursor-pointer
-        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-      `}
-      style={{
-        transitionDelay: isVisible ? `${delay}s` : '0s',
-      }}
-    >
-      {/* Thumbnail */}
-      <div className="text-5xl text-center mb-3">{item.thumbnail}</div>
-      
-      {/* Info */}
-      <h4 className="font-serif text-sm mb-1 line-clamp-2">{item.title}</h4>
-      <p className="text-xs opacity-60 mb-1">{item.type}</p>
-      <p className="text-xs opacity-40">{item.date}</p>
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    
+    if (!confirm(`Delete "${item.title}"? This cannot be undone.`)) {
+      return;
+    }
 
-      {/* Hover Actions */}
-      {isHovered && (
-        <div className="absolute inset-0 bg-ink/90 rounded-sm flex items-center justify-center gap-3 animate-fade-in">
-          <button className="text-white text-xs px-3 py-1.5 border border-white/30 rounded-sm hover:bg-white/10 transition">
-            View
-          </button>
-          <button className="text-white text-xs px-3 py-1.5 border border-white/30 rounded-sm hover:bg-white/10 transition">
-            Edit
-          </button>
-          <button className="text-white text-xs px-3 py-1.5 border border-white/30 rounded-sm hover:bg-white/10 transition">
-            Delete
-          </button>
+    try {
+      const token = localStorage.getItem('token');
+      await api.delete(`/patterns/${item.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Call parent's onDelete to refresh the list
+      onDelete(item.id);
+      alert('Pattern deleted! ✓');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert(error.response?.data?.message || 'Failed to delete pattern. Check if the backend route exists.');
+    }
+  };
+
+  const handleView = (e) => {
+    e.stopPropagation();
+    setShowVisualization(!showVisualization);
+  };
+
+  return (
+    <>
+      <div
+        ref={cardRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`
+          relative bg-white/70 rounded-sm border border-ink/15 p-4
+          hover:shadow-lg transition-all duration-500 cursor-pointer
+          ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+        `}
+        style={{
+          transitionDelay: isVisible ? `${delay}s` : '0s',
+        }}
+      >
+        {/* Thumbnail */}
+        <div className="text-5xl text-center mb-3">{item.thumbnail}</div>
+        
+        {/* Info */}
+        <h4 className="font-serif text-sm mb-1 line-clamp-2">{item.title}</h4>
+        <p className="text-xs opacity-60 mb-1">{item.type}</p>
+        <p className="text-xs opacity-40">{item.date}</p>
+
+        {/* Hover Actions */}
+        {isHovered && (
+          <div className="absolute inset-0 bg-ink/90 rounded-sm flex items-center justify-center gap-3 animate-fade-in">
+            <button 
+              onClick={handleView}
+              className="text-white text-xs px-3 py-1.5 border border-white/30 rounded-sm hover:bg-white/10 transition"
+            >
+              View
+            </button>
+            <button 
+              onClick={handleDelete}
+              className="text-white text-xs px-3 py-1.5 border border-red-400/50 rounded-sm hover:bg-red-500/70 transition"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* View Modal */}
+      {showVisualization && item.analysisData && (
+        <div
+          className="fixed inset-0 bg-[rgba(0,0,0,0.7)] backdrop-blur-sm flex justify-center items-center z-[999] px-6 animate-fade-in"
+          onClick={() => setShowVisualization(false)}
+        >
+          <div
+            className="bg-white/90 backdrop-blur-md border border-ink/20 p-6 rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] max-w-[900px] w-full max-h-[90vh] overflow-y-auto animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-serif text-[26px]">{item.title}</h3>
+              <button
+                onClick={() => setShowVisualization(false)}
+                className="text-2xl hover:opacity-70 transition"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Insights */}
+            {item.analysisData.insights && (
+              <div className="bg-gradient-to-r from-accent-green/10 to-accent-gold/10 p-4 rounded-sm mb-4 border border-ink/10">
+                <h4 className="font-serif text-lg mb-3 flex items-center gap-2">
+                  <span>🔍</span> Key Discoveries
+                </h4>
+                <div className="space-y-2">
+                  {item.analysisData.insights.map((insight, i) => (
+                    <p key={i} className="text-sm leading-relaxed">{insight}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Visualization */}
+            <PatternVisualization data={item.analysisData} />
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

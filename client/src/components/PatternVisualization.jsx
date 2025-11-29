@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-import { RENDERERS, getRandomRenderer } from "./renderers";
+import { RENDERERS } from "./renderers";
 
 export default function PatternVisualization({ data }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [selectedRenderer, setSelectedRenderer] = useState("golden_spiral");
 
   if (!data || !data.visualization_data) {
     return (
@@ -38,14 +39,31 @@ export default function PatternVisualization({ data }) {
     root.position.set(0, 0, 0);
     scene.add(root);
 
+    // Calculate data center
+    let centerX = 0, centerY = 0, centerZ = 0;
+    if (pts.length > 0) {
+      centerX = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
+      centerY = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
+      centerZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    }
+
     // ----- Camera -----
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 4000);
-    const cam = vizData.camera_position || { x: 140, y: 140, z: 140 };
-    camera.position.set(cam.x, cam.y, cam.z);
+    
+    const cameraDistance = 150;
+    camera.position.set(
+      centerX + cameraDistance,
+      centerY + cameraDistance * 0.5,
+      centerZ + cameraDistance
+    );
 
-    // ----- Renderer -----
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // ----- Renderer ----- 
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
 
     mount.innerHTML = "";
@@ -54,39 +72,41 @@ export default function PatternVisualization({ data }) {
     // ----- Controls -----
     const controls = new OrbitControls(camera, renderer.domElement);
 
-    const look = vizData.camera_look_at || { x: 0, y: 50, z: 0 };
-    controls.target.set(look.x, look.y, look.z);
-    camera.lookAt(controls.target);
+    controls.target.set(centerX, centerY, centerZ);
+    camera.lookAt(centerX, centerY, centerZ);
+    controls.update();
 
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
 
-    controls.minDistance = 60;
-    controls.maxDistance = 350;
+    controls.minDistance = 30;
+    controls.maxDistance = 400;
 
-    controls.enablePan = false;
+    controls.enablePan = true;
     controls.screenSpacePanning = false;
 
     controls.rotateSpeed = 0.8;
+
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI;
 
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.4;
 
     // ----- Lighting -----
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
-    const d1 = new THREE.DirectionalLight(0xffffff, 0.9);
-    d1.position.set(120, 180, 130);
+    const d1 = new THREE.DirectionalLight(0xffffff, 1);
+    d1.position.set(centerX + 120, centerY + 180, centerZ + 130);
     scene.add(d1);
 
-    const d2 = new THREE.DirectionalLight(0x88bbff, 0.4);
-    d2.position.set(-120, -90, -100);
+    const d2 = new THREE.DirectionalLight(0x88bbff, 0.5);
+    d2.position.set(centerX - 120, centerY - 90, centerZ - 100);
     scene.add(d2);
 
-    // ----- Renderer selection -----
-    // const renderFunc = RENDERERS["golden_spiral"];
-    const { renderer: renderFunc, key } = getRandomRenderer();
-    console.log("🎨 Renderer:", key);
+    // ----- Use selected renderer -----
+    const renderFunc = RENDERERS[selectedRenderer].renderer;
+    console.log("🎨 Renderer:", selectedRenderer);
 
     let updateFn = () => {};
 
@@ -104,7 +124,7 @@ export default function PatternVisualization({ data }) {
       console.error("Renderer crashed:", e);
     }
 
-    setLoading(false);
+    setTimeout(() => setLoading(false), 100);
 
     // ----- Animation -----
     const animate = () => {
@@ -123,6 +143,7 @@ export default function PatternVisualization({ data }) {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     };
     window.addEventListener("resize", handleResize);
 
@@ -132,17 +153,61 @@ export default function PatternVisualization({ data }) {
       window.removeEventListener("resize", handleResize);
       disposables.forEach(o => o?.dispose?.());
       renderer.dispose();
-      mount.removeChild(renderer.domElement);
+      controls.dispose();
+      if (mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
+      }
     };
-  }, [data]);
+  }, [data, selectedRenderer]); // Re-render when renderer changes
 
   return (
     <div className="relative w-full h-[600px] bg-paper border rounded">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-paper/80 backdrop-blur-sm z-10">
-          <p className="text-sm">Rendering…</p>
+          <div className="text-center">
+            <div className="text-4xl mb-2 animate-pulse">⚡</div>
+            <p className="text-sm">Rendering visualization…</p>
+          </div>
         </div>
       )}
+
+      {/* VISUALIZATION SELECTOR */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <button
+          onClick={() => setSelectedRenderer("golden_spiral")}
+          className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+            selectedRenderer === "golden_spiral"
+              ? "bg-accent-gold/30 border-accent-gold"
+              : "bg-white/10 border-white/30 hover:bg-white/20"
+          }`}
+          title="Wireframe Spiral"
+        >
+          🌀 Spiral
+        </button>
+        <button
+          onClick={() => setSelectedRenderer("data_ribbon")}
+          className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+            selectedRenderer === "data_ribbon"
+              ? "bg-accent-gold/30 border-accent-gold"
+              : "bg-white/10 border-white/30 hover:bg-white/20"
+          }`}
+          title="Flowing Ribbon"
+        >
+          〰️ Ribbon
+        </button>
+        <button
+          onClick={() => setSelectedRenderer("candle_spiral")}
+          className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+            selectedRenderer === "candle_spiral"
+              ? "bg-accent-gold/30 border-accent-gold"
+              : "bg-white/10 border-white/30 hover:bg-white/20"
+          }`}
+          title="Ring Tunnel"
+        >
+          ⭕ Rings
+        </button>
+      </div>
+
       <div ref={mountRef} className="w-full h-full" />
     </div>
   );

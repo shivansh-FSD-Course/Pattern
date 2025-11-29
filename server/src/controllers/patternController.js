@@ -252,6 +252,7 @@ export const getCommunityPatterns = async (req, res) => {
   }
 };
 // Get user's own patterns
+// Get user's own patterns
 export const getUserPatterns = async (req, res) => {
   try {
     const patterns = await Pattern.find({ user: req.user._id })
@@ -267,6 +268,41 @@ export const getUserPatterns = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch patterns'
+    });
+  }
+};
+
+// Delete pattern
+export const deletePattern = async (req, res) => {
+  try {
+    const pattern = await Pattern.findById(req.params.id);
+    
+    if (!pattern) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Pattern not found' 
+      });
+    }
+    
+    // Check if user owns this pattern
+    if (pattern.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Not authorized to delete this pattern' 
+      });
+    }
+    
+    await pattern.deleteOne();
+    
+    res.json({ 
+      success: true, 
+      message: 'Pattern deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete pattern error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
     });
   }
 };
