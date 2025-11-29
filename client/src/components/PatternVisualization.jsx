@@ -108,7 +108,10 @@ export default function PatternVisualization({ data }) {
     const renderFunc = RENDERERS[selectedRenderer].renderer;
     console.log("🎨 Renderer:", selectedRenderer);
 
+    // In PatternVisualization.jsx, update the update function section:
+
     let updateFn = () => {};
+    let toggleLabelsFn = null;
 
     try {
       const result = renderFunc({
@@ -119,10 +122,14 @@ export default function PatternVisualization({ data }) {
       });
 
       if (result?.update) updateFn = result.update;
+      if (result?.toggleLabels) toggleLabelsFn = result.toggleLabels;
 
     } catch (e) {
       console.error("Renderer crashed:", e);
     }
+
+    // Store toggle function for button
+    mount.toggleLabels = toggleLabelsFn;
 
     setTimeout(() => setLoading(false), 100);
 
@@ -206,9 +213,22 @@ export default function PatternVisualization({ data }) {
         >
           ⭕ Rings
         </button>
+        
+        {/* LABELS TOGGLE */}
+        <button
+          onClick={() => {
+            if (mountRef.current?.toggleLabels) {
+              mountRef.current.toggleLabels();
+            }
+          }}
+          className="px-3 py-1.5 text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
+          title="Toggle Data Labels"
+        >
+          🏷️ Labels
+        </button>
       </div>
 
-      <div ref={mountRef} className="w-full h-full" />
-    </div>
-  );
+    <div ref={mountRef} className="w-full h-full" />
+  </div>
+);
 }

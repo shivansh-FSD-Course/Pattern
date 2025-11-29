@@ -16,14 +16,13 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
   // === MAIN RIBBON TUBE ===
   const tubeGeom = new THREE.TubeGeometry(curve, 600, 2.5, 24, false);
   
-  // Create gradient color based on position along curve
   const colors = [];
   const positions = tubeGeom.attributes.position;
   
   for (let i = 0; i < positions.count; i++) {
     const t = i / positions.count;
     const color = new THREE.Color();
-    color.setHSL(0.55 + t * 0.15, 0.8, 0.5); // Blue to cyan gradient
+    color.setHSL(0.55 + t * 0.15, 0.8, 0.5);
     colors.push(color.r, color.g, color.b);
   }
   
@@ -42,7 +41,7 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
   const mesh = new THREE.Mesh(tubeGeom, tubeMat);
   group.add(mesh);
 
-  // === WIDER RIBBON SURFACE ALONG DATA PATH ===
+  // === WIDER RIBBON SURFACE ===
   const ribbonSegments = Math.min(pts.length - 1, 150);
   const ribbonWidth = 8;
   
@@ -56,24 +55,20 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
     const point = curve.getPointAt(t);
     const tangent = curve.getTangentAt(t);
     
-    // Create perpendicular vector for ribbon width
     const up = new THREE.Vector3(0, 1, 0);
     const binormal = new THREE.Vector3().crossVectors(tangent, up).normalize();
     
-    // Left and right edges of ribbon
     const left = point.clone().add(binormal.clone().multiplyScalar(ribbonWidth));
     const right = point.clone().sub(binormal.clone().multiplyScalar(ribbonWidth));
     
     ribbonPositions.push(left.x, left.y, left.z);
     ribbonPositions.push(right.x, right.y, right.z);
     
-    // Color gradient
     const color = new THREE.Color();
     color.setHSL(0.55 + t * 0.15, 0.7, 0.55);
     ribbonColors.push(color.r, color.g, color.b);
     ribbonColors.push(color.r, color.g, color.b);
     
-    // Create triangles
     if (i < ribbonSegments) {
       const base = i * 2;
       ribbonIndices.push(base, base + 1, base + 2);
@@ -100,7 +95,7 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
   const ribbon = new THREE.Mesh(ribbonGeom, ribbonMat);
   group.add(ribbon);
 
-  // === FLOWING PARTICLES ALONG DATA PATH ===
+  // === PARTICLES ===
   const particleCount = 200;
   const particleGeom = new THREE.BufferGeometry();
   const particlePositions = [];
@@ -126,7 +121,7 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
   const particles = new THREE.Points(particleGeom, particleMat);
   group.add(particles);
 
-  // === ENERGY RINGS AT DATA INTERVALS ===
+  // === ENERGY RINGS ===
   const ringInterval = Math.max(1, Math.floor(pts.length / 20));
   const rings = [];
 
@@ -156,7 +151,84 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
     rings.push(ring);
   }
 
-  // === GLOWING EDGE LINE ===
+  // === ONLY 5 KEY DATA MARKERS ===
+  const keyIndices = [
+    0,
+    Math.floor(pts.length * 0.25),
+    Math.floor(pts.length * 0.5),
+    Math.floor(pts.length * 0.75),
+    pts.length - 1
+  ];
+  
+  const dataMarkers = [];
+  const labels = [];
+  
+  keyIndices.forEach((i) => {
+    const p = pts[i];
+    
+    const markerGeom = new THREE.SphereGeometry(3, 32, 32);
+    const markerMat = new THREE.MeshStandardMaterial({
+      color: "#55ccff",
+      emissive: "#55ccff",
+      emissiveIntensity: 1.2,
+      transparent: true,
+      opacity: 0.9
+    });
+
+    disposables.push(markerGeom, markerMat);
+
+    const marker = new THREE.Mesh(markerGeom, markerMat);
+    marker.position.set(p.x, p.y, p.z);
+    marker.userData.phase = Math.random() * Math.PI * 2;
+    
+    group.add(marker);
+    dataMarkers.push(marker);
+
+    const light = new THREE.PointLight("#55ccff", 1.5, 30);
+    light.position.copy(marker.position);
+    group.add(light);
+
+    // === CLEAN MINIMAL LABEL ===
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 200;
+    canvas.height = 80;
+
+    context.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    context.fillRect(0, 0, 200, 80);
+
+    context.strokeStyle = '#55ccff';
+    context.lineWidth = 2;
+    context.strokeRect(0, 0, 200, 80);
+
+    context.fillStyle = '#55ccff';
+    context.font = 'bold 18px Arial';
+    context.fillText(`Point ${i}`, 10, 30);
+    
+    context.fillStyle = '#FFFFFF';
+    context.font = '14px Arial';
+    const value = p.value?.toFixed(1) || p.y.toFixed(1);
+    context.fillText(`Value: ${value}`, 10, 55);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ 
+      map: texture,
+      transparent: true,
+      opacity: 0
+    });
+    
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(12, 5, 1);
+    sprite.position.set(p.x, p.y + 10, p.z);
+    sprite.userData.baseY = p.y + 10;
+    sprite.userData.phase = Math.random() * Math.PI * 2;
+    sprite.userData.material = spriteMat;
+    
+    group.add(sprite);
+    labels.push(sprite);
+    disposables.push(texture, spriteMat);
+  });
+
   const edgePoints = curve.getPoints(500);
   const edgeGeom = new THREE.BufferGeometry().setFromPoints(edgePoints);
   const edgeMat = new THREE.LineBasicMaterial({
@@ -171,24 +243,39 @@ export function renderDataRibbon({ scene, vizData, THREE, disposables }) {
   group.add(edgeLine);
 
   let time = 0;
+  let showLabels = false;
 
   return {
     group,
+    labels,
+    toggleLabels: () => {
+      showLabels = !showLabels;
+      labels.forEach(label => {
+        label.userData.material.opacity = showLabels ? 0.95 : 0;
+      });
+    },
     update: () => {
       time += 0.01;
       group.rotation.y += 0.004;
 
-      // Animate rings
-      rings.forEach((ring, i) => {
+      rings.forEach((ring) => {
         const pulse = Math.sin(time * 3 + ring.userData.phase * 0.5);
         ring.scale.setScalar(1 + pulse * 0.15);
         ring.material.opacity = 0.4 + pulse * 0.2;
       });
 
-      // Pulse tube
-      tubeMat.emissiveIntensity = 0.2 + Math.sin(time * 2) * 0.15;
+      dataMarkers.forEach((marker) => {
+        const scale = 1 + Math.sin(time * 3 + marker.userData.phase) * 0.3;
+        marker.scale.setScalar(scale);
+      });
 
-      // Shimmer particles
+      if (showLabels) {
+        labels.forEach(label => {
+          label.position.y = label.userData.baseY + Math.sin(time * 0.5 + label.userData.phase) * 0.5;
+        });
+      }
+
+      tubeMat.emissiveIntensity = 0.2 + Math.sin(time * 2) * 0.15;
       particleMat.opacity = 0.5 + Math.sin(time * 2) * 0.2;
     }
   };

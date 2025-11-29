@@ -4,11 +4,14 @@ import api from '../api/axios';
 export default function CommentSection({ patternId, comments, onCommentAdded }) {
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState(null);
+  const [replyText, setReplyText] = useState(''); // Separate state for replies!
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    const textToPost = replyTo ? replyText : newComment;
+    
+    if (!textToPost.trim()) return;
 
     setIsSubmitting(true);
 
@@ -17,7 +20,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       const response = await api.post(
         `/patterns/${patternId}/comments`,
         {
-          text: newComment,
+          text: textToPost,
           parentCommentId: replyTo
         },
         {
@@ -27,12 +30,13 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
 
       if (response.data.success) {
         setNewComment('');
+        setReplyText('');
         setReplyTo(null);
-        onCommentAdded(response.data.comment);
+        onCommentAdded();
       }
     } catch (error) {
       console.error('Failed to post comment:', error);
-      alert('Failed to post comment');
+      alert(error.response?.data?.message || 'Failed to post comment');
     } finally {
       setIsSubmitting(false);
     }
@@ -134,10 +138,13 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
               </button>
 
               <button
-                onClick={() => setReplyTo(comment._id)}
+                onClick={() => {
+                  setReplyTo(replyTo === comment._id ? null : comment._id);
+                  setReplyText('');
+                }}
                 className="opacity-60 hover:opacity-100 transition"
               >
-                Reply
+                {replyTo === comment._id ? 'Cancel' : 'Reply'}
               </button>
 
               {currentUser === comment.user?.username && (
@@ -154,8 +161,8 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
             {replyTo === comment._id && (
               <form onSubmit={handleSubmit} className="mt-3">
                 <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
                   placeholder={`Reply to @${comment.user?.username}...`}
                   className="
                     w-full h-16 resize-none px-3 py-2 border border-ink/25
@@ -166,20 +173,20 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
                 <div className="flex gap-2 mt-2">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !replyText.trim()}
                     className="
                       px-4 py-1.5 border border-ink text-sm rounded-sm
                       hover:bg-ink hover:text-paper transition
                       disabled:opacity-50 disabled:cursor-not-allowed
                     "
                   >
-                    {isSubmitting ? 'Posting...' : 'Reply'}
+                    {isSubmitting ? 'Posting...' : 'Post Reply'}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setReplyTo(null);
-                      setNewComment('');
+                      setReplyText('');
                     }}
                     className="
                       px-4 py-1.5 border border-ink/30 text-sm rounded-sm
@@ -226,7 +233,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
           />
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !newComment.trim()}
             className="
               mt-2 px-4 py-1.5 border border-ink text-sm rounded-sm
               hover:bg-ink hover:text-paper transition

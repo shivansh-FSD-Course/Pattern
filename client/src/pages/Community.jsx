@@ -80,28 +80,28 @@ export default function Community() {
         const response = await api.get('/patterns/community');
         if (response.data.success) {
           // Transform the data to match our post structure
-          const transformedPosts = response.data.patterns.map(pattern => ({
-            id: pattern._id,
-            username: pattern.user.username,
-            avatar: pattern.user.avatar || { char: "φ", color: "#7BA591" },
-            badges: [], // Can add badges based on user achievements later
-            title: pattern.title,
-            content: pattern.caption || "Check out this amazing pattern discovery!",
-            patternType: pattern.patternType || 'other',
-            timestamp: getTimeAgo(pattern.createdAt),
-            views: pattern.views,
-            likes: pattern.likes,
-            thumbnail: getPatternThumbnail(pattern.patternType),
-            comments: pattern.comments.map(c => ({
-              user: c.user?.username || 'Anonymous',
-              avatar: c.user?.avatar || { char: "λ", color: "#5C8BB8" },
-              text: c.text,
-              timestamp: getTimeAgo(c.timestamp)
-            })),
-            isLiked: false, // TODO: Check if current user liked it
-            isSaved: false,
-            analysisData: pattern.analysisData
-          }));
+          // Find this section in the fetchPatterns useEffect (around line 86):
+
+        const transformedPosts = response.data.patterns.map(pattern => ({
+          id: pattern._id,
+          username: pattern.user.username,
+          avatar: pattern.user.avatar || { char: "φ", color: "#7BA591" },
+          badges: [],
+          title: pattern.title,
+          content: pattern.caption || "Check out this amazing pattern discovery!",
+          patternType: pattern.patternType || 'other',
+          timestamp: getTimeAgo(pattern.createdAt),
+          views: pattern.views,
+          likes: pattern.likes,
+          thumbnail: getPatternThumbnail(pattern.patternType),
+          
+          // FIX: Pass the raw comments data with proper structure
+          comments: pattern.comments || [],
+          
+          isLiked: false,
+          isSaved: false,
+          analysisData: pattern.analysisData
+        }));
           setPosts(transformedPosts);
         }
         setLoading(false);
