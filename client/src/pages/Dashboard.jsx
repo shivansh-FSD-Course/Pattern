@@ -558,12 +558,13 @@ export default function Dashboard() {
               >
                 Theme
               </h3>
-              <div className="grid grid-cols-4 gap-3">
+              {/* MOBILE: 2 columns, TABLET: 3 columns, DESKTOP: 4 columns */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {Object.entries(THEMES).map(([key, theme]) => (
                   <button
                     key={key}
                     onClick={() => handleThemeChange(key)}
-                    className="p-4 rounded-sm border-2 transition-all"
+                    className="p-3 sm:p-4 rounded-sm border-2 transition-all"
                     style={{
                       borderColor: selectedTheme === key ? 'var(--theme-primary)' : '#E5E5E5',
                       transform: selectedTheme === key ? 'scale(1.05)' : 'scale(1)',
@@ -571,10 +572,10 @@ export default function Dashboard() {
                     }}
                   >
                     <div 
-                      className="w-12 h-12 rounded-full mx-auto mb-2"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full mx-auto mb-2"
                       style={{ backgroundColor: theme.primary }}
                     />
-                    <p className="text-sm font-medium">{theme.name}</p>
+                    <p className="text-xs sm:text-sm font-medium">{theme.name}</p>
                   </button>
                 ))}
               </div>

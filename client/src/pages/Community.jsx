@@ -79,28 +79,23 @@ export default function Community() {
       try {
         const response = await api.get('/patterns/community');
         if (response.data.success) {
-          // Transform the data to match our post structure
-
-        const transformedPosts = response.data.patterns.map(pattern => ({
-          id: pattern._id,
-          username: pattern.user.username,
-          avatar: pattern.user.avatar || { char: "φ", color: "#7BA591" },
-          badges: [],
-          title: pattern.title,
-          content: pattern.caption || "Check out this amazing pattern discovery!",
-          patternType: pattern.patternType || 'other',
-          timestamp: getTimeAgo(pattern.createdAt),
-          views: pattern.views,
-          likes: pattern.likes,
-          thumbnail: getPatternThumbnail(pattern.patternType),
-          
-          // FIX: Pass the raw comments data with proper structure
-          comments: pattern.comments || [],
-          
-          isLiked: false,
-          isSaved: false,
-          analysisData: pattern.analysisData
-        }));
+          const transformedPosts = response.data.patterns.map(pattern => ({
+            id: pattern._id,
+            username: pattern.user.username,
+            avatar: pattern.user.avatar || { char: "φ", color: "#7BA591" },
+            badges: [],
+            title: pattern.title,
+            content: pattern.caption || "Check out this amazing pattern discovery!",
+            patternType: pattern.patternType || 'other',
+            timestamp: getTimeAgo(pattern.createdAt),
+            views: pattern.views,
+            likes: pattern.likes,
+            thumbnail: getPatternThumbnail(pattern.patternType),
+            comments: pattern.comments || [],
+            isLiked: false,
+            isSaved: false,
+            analysisData: pattern.analysisData
+          }));
           setPosts(transformedPosts);
         }
         setLoading(false);
@@ -170,6 +165,16 @@ export default function Community() {
     ));
   };
 
+  /* Handle expand with scroll lock */
+  const handleExpand = (postId) => {
+    const currentScrollY = window.scrollY;
+    setExpandedPost(expandedPost === postId ? null : postId);
+    
+    requestAnimationFrame(() => {
+      window.scrollTo(0, currentScrollY);
+    });
+  };
+
   /* Filter and sort posts */
   const filteredPosts = posts
     .filter(post => {
@@ -179,7 +184,7 @@ export default function Community() {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      if (sortBy === "recent") return 0; // Keep original order
+      if (sortBy === "recent") return 0;
       if (sortBy === "popular") return b.likes - a.likes;
       if (sortBy === "views") return b.views - a.views;
       return 0;
@@ -244,102 +249,105 @@ export default function Community() {
         ))}
       </div>
 
-      {/* PAGE TITLE */}
-      <header className="relative z-20 px-12 pt-16 pb-6">
-        <h1 className="font-serif text-[46px] tracking-wide">
+      {/* PAGE TITLE - Responsive padding */}
+      <header className="relative z-20 px-4 sm:px-8 md:px-12 pt-16 pb-6">
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-[46px] tracking-wide">
           Community
         </h1>
-        <p className="text-[15px] opacity-65 mt-1">
+        <p className="text-sm sm:text-[15px] opacity-65 mt-1">
           Explore discoveries, discuss patterns, and share your findings.
         </p>
       </header>
 
-      {/* SEARCH & FILTER BAR */}
-      <div className="relative z-20 px-12 mb-8">
+      {/* SEARCH & FILTER BAR - Responsive */}
+      <div className="relative z-20 px-4 sm:px-8 md:px-12 mb-8">
         <div 
           className={`
-            bg-white/65 backdrop-blur-sm border border-ink/15 rounded-sm p-4
+            bg-white/65 backdrop-blur-sm border border-ink/15 rounded-sm p-3 sm:p-4
             shadow-[0_6px_20px_rgba(0,0,0,0.06)]
             transition-all duration-700
             ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
           `}
         >
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col gap-3">
             {/* Search */}
-            <div className="flex-1 relative">
+            <div className="relative">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
               <input
                 type="text"
-                placeholder="Search patterns, users, or keywords..."
+                placeholder="Search patterns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="
-                  w-full pl-10 pr-4 py-2 border border-ink/25 rounded-sm
+                  w-full pl-10 pr-4 py-2 border border-ink/25 rounded-sm text-sm
                   bg-white/70 outline-none focus:border-ink transition
                 "
               />
             </div>
 
-            {/* Filter */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="
-                px-4 py-2 border border-ink/25 rounded-sm
-                bg-white/70 outline-none focus:border-ink transition
-              "
-            >
-              <option value="all">All Patterns</option>
-              {Object.entries(PATTERN_TYPES).map(([key, type]) => (
-                <option key={key} value={key}>{type.label}</option>
-              ))}
-            </select>
+            {/* Filter & Sort Row */}
+            <div className="flex gap-2">
+              {/* Filter */}
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="
+                  flex-1 px-3 py-2 border border-ink/25 rounded-sm text-sm
+                  bg-white/70 outline-none focus:border-ink transition
+                "
+              >
+                <option value="all">All Patterns</option>
+                {Object.entries(PATTERN_TYPES).map(([key, type]) => (
+                  <option key={key} value={key}>{type.label}</option>
+                ))}
+              </select>
 
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="
-                px-4 py-2 border border-ink/25 rounded-sm
-                bg-white/70 outline-none focus:border-ink transition
-              "
-            >
-              <option value="recent">Most Recent</option>
-              <option value="popular">Most Popular</option>
-              <option value="views">Most Viewed</option>
-            </select>
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="
+                  flex-1 px-3 py-2 border border-ink/25 rounded-sm text-sm
+                  bg-white/70 outline-none focus:border-ink transition
+                "
+              >
+                <option value="recent">Recent</option>
+                <option value="popular">Popular</option>
+                <option value="views">Viewed</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* MAIN LAYOUT */}
-      <div className="relative z-20 flex flex-col lg:flex-row gap-8 px-12 max-w-[1400px] mx-auto">
+      {/* MAIN LAYOUT - Responsive stack */}
+      <div className="relative z-20 flex flex-col lg:flex-row gap-6 px-4 sm:px-8 md:px-12 max-w-[1400px] mx-auto">
 
         {/* LEFT: POSTS */}
-        <div className="flex flex-col gap-6 flex-[2]">
+        <div className="flex flex-col gap-4 sm:gap-6 flex-1 lg:flex-[2]">
 
-          {/* CREATE POST BUTTON */}
+          {/* CREATE POST BUTTON - Responsive */}
           <button
             onClick={() => setShowCreatePost(true)}
             className={`
               bg-gradient-to-r from-accent-green/20 to-accent-gold/20
               backdrop-blur-sm border-2 border-dashed border-ink/30
-              rounded-sm p-8 text-center
+              rounded-sm p-6 sm:p-8 text-center
               hover:border-ink/50 hover:scale-[1.01]
               transition-all duration-300
               ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
             `}
           >
-            <div className="text-4xl mb-2">✨</div>
-            <h3 className="font-serif text-xl mb-1">Share Your Discovery</h3>
-            <p className="text-sm opacity-60">Upload a dataset or visualization</p>
+            <div className="text-3xl sm:text-4xl mb-2">✨</div>
+            <h3 className="font-serif text-lg sm:text-xl mb-1">Share Your Discovery</h3>
+            <p className="text-xs sm:text-sm opacity-60">Upload a dataset or visualization</p>
           </button>
 
           {/* LOADING STATE */}
           {loading && (
             <div className="text-center py-20">
-              <div className="text-5xl mb-3 animate-pulse">⚡</div>
-              <p className="font-serif text-lg">Loading patterns...</p>
+              <div className="text-4xl sm:text-5xl mb-3 animate-pulse">⚡</div>
+              <p className="font-serif text-base sm:text-lg">Loading patterns...</p>
             </div>
           )}
 
@@ -350,7 +358,7 @@ export default function Community() {
               post={post}
               delay={index * 0.1}
               isExpanded={expandedPost === post.id}
-              onExpand={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+              onExpand={() => handleExpand(post.id)}
               onLike={handleLike}
               onSave={handleSave}
             />
@@ -359,9 +367,9 @@ export default function Community() {
           {/* NO RESULTS */}
           {!loading && filteredPosts.length === 0 && (
             <div className="text-center py-20 opacity-60">
-              <div className="text-5xl mb-3">🔍</div>
-              <p className="font-serif text-lg">No patterns found</p>
-              <p className="text-sm">
+              <div className="text-4xl sm:text-5xl mb-3">🔍</div>
+              <p className="font-serif text-base sm:text-lg">No patterns found</p>
+              <p className="text-xs sm:text-sm">
                 {posts.length === 0 
                   ? "Be the first to share a pattern discovery!" 
                   : "Try adjusting your search or filters"
@@ -371,8 +379,8 @@ export default function Community() {
           )}
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <div className="flex flex-col gap-6 flex-[1] lg:sticky lg:top-8 lg:self-start">
+        {/* RIGHT SIDEBAR - Hidden on mobile, shown on desktop */}
+        <div className="hidden lg:flex flex-col gap-6 flex-[1] lg:sticky lg:top-8 lg:self-start">
 
           {/* LIVE ACTIVITY FEED */}
           <div
@@ -451,11 +459,10 @@ export default function Community() {
 }
 
 /* 
-      POST CARD COMPONENT
+      POST CARD COMPONENT - Mobile Responsive
  */
 function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
   const [isVisible, setIsVisible] = useState(false);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const cardRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -479,64 +486,51 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
     };
   }, []);
 
-  const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientY - rect.top - rect.height / 2) / 250;
-    const y = (e.clientX - rect.left - rect.width / 2) / 250;
-    setTilt({ x, y });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 });
-  };
-
   const patternType = PATTERN_TYPES[post.patternType] || PATTERN_TYPES.other;
 
   return (
     <div
       ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       className={`
         bg-white/65 backdrop-blur-sm border border-ink/20
         rounded-sm shadow-[0_8px_24px_rgba(0,0,0,0.08)]
         hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]
-        p-6 cursor-pointer
+        p-4 sm:p-6 cursor-pointer
         transition-all duration-500
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
       style={{
-        transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
         transitionDelay: isVisible ? `${delay}s` : '0s',
       }}
       onClick={(e) => {
-        // Don't expand/collapse if clicking inside comment section
-        if (e.target.closest('.comment-section-wrapper')) {
+        if (e.target.closest('.comment-section-wrapper') ||
+            e.target.closest('button') ||
+            e.target.tagName === 'TEXTAREA' ||
+            e.target.tagName === 'INPUT') {
           return;
         }
         onExpand();
       }}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
+      {/* Header - Responsive */}
+      <div className="flex items-start justify-between mb-4 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Avatar */}
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center font-serif text-xl"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-serif text-lg sm:text-xl flex-shrink-0"
             style={{ backgroundColor: post.avatar.color }}
           >
             {post.avatar.char}
           </div>
           
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">@{post.username}</span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="font-medium text-sm sm:text-base truncate">@{post.username}</span>
               {/* Badges */}
               {post.badges && post.badges.map(badgeKey => (
                 <span 
                   key={badgeKey}
-                  className="text-sm"
+                  className="text-xs sm:text-sm flex-shrink-0"
                   title={USER_BADGES[badgeKey]?.name}
                 >
                   {USER_BADGES[badgeKey]?.icon}
@@ -547,42 +541,42 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
           </div>
         </div>
 
-        {/* Pattern Type Badge */}
+        {/* Pattern Type Badge - Responsive */}
         <span 
-          className="px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"
+          className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1 flex-shrink-0"
           style={{ backgroundColor: patternType.color }}
         >
           <span>{patternType.icon}</span>
-          {patternType.label}
+          <span className="hidden sm:inline">{patternType.label}</span>
         </span>
       </div>
 
       {/* Thumbnail Preview - Only show if NOT expanded */}
       {!isExpanded && (
-        <div className="text-6xl text-center mb-4 py-6 bg-white/40 rounded-sm">
+        <div className="text-5xl sm:text-6xl text-center mb-4 py-4 sm:py-6 bg-white/40 rounded-sm">
           {post.thumbnail}
         </div>
       )}
 
-      {/* Title */}
-      <h2 className="font-serif text-[24px] mb-2">
+      {/* Title - Responsive */}
+      <h2 className="font-serif text-xl sm:text-[24px] mb-2">
         {post.title}
       </h2>
 
-      {/* Content */}
-      <p className={`opacity-80 leading-relaxed mb-4 ${!isExpanded && 'line-clamp-2'}`}>
+      {/* Content - Responsive */}
+      <p className={`opacity-80 leading-relaxed mb-4 text-sm sm:text-base ${!isExpanded && 'line-clamp-2'}`}>
         {post.content}
       </p>
 
       {/* SHOW INSIGHTS IF EXPANDED */}
       {isExpanded && post.analysisData && post.analysisData.insights && (
-        <div className="mb-4 p-4 bg-gradient-to-r from-accent-green/10 to-accent-gold/10 rounded-sm border border-ink/10" onClick={(e) => e.stopPropagation()}>
-          <h4 className="font-serif text-lg mb-3 flex items-center gap-2">
+        <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-accent-green/10 to-accent-gold/10 rounded-sm border border-ink/10" onClick={(e) => e.stopPropagation()}>
+          <h4 className="font-serif text-base sm:text-lg mb-3 flex items-center gap-2">
             <span>🔍</span> Key Discoveries
           </h4>
           <div className="space-y-2">
             {post.analysisData.insights.map((insight, i) => (
-              <p key={i} className="text-sm leading-relaxed">{insight}</p>
+              <p key={i} className="text-xs sm:text-sm leading-relaxed">{insight}</p>
             ))}
           </div>
         </div>
@@ -595,8 +589,8 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="flex items-center gap-4 text-sm opacity-60 mb-4">
+      {/* Stats - Responsive */}
+      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm opacity-60 mb-3 sm:mb-4">
         <span className="flex items-center gap-1">
           <EyeIcon /> {post.views}
         </span>
@@ -604,18 +598,18 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
           <CommentIcon /> {post.comments.length}
         </span>
         {isExpanded ? (
-          <span className="text-xs ml-auto">👆 Click to collapse</span>
+          <span className="text-xs ml-auto hidden sm:inline">👆 Click to collapse</span>
         ) : (
-          <span className="text-xs ml-auto">👆 Click to expand & view visualization</span>
+          <span className="text-xs ml-auto hidden sm:inline">👆 Click to expand</span>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2 pb-4 border-b border-ink/10">
+      {/* Actions - Responsive buttons */}
+      <div className="flex items-center gap-2 pb-3 sm:pb-4 border-b border-ink/10">
         <button
           onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-sm border transition-all
+            flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-sm border transition-all text-xs sm:text-sm
             ${post.isLiked 
               ? 'bg-accent-green/20 border-accent-green text-accent-green' 
               : 'border-ink/20 hover:bg-ink/5'
@@ -628,7 +622,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         <button
           onClick={(e) => { e.stopPropagation(); onSave(post.id); }}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-sm border transition-all
+            flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-sm border transition-all text-xs sm:text-sm
             ${post.isSaved 
               ? 'bg-accent-gold/20 border-accent-gold text-accent-gold' 
               : 'border-ink/20 hover:bg-ink/5'
@@ -636,11 +630,11 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
           `}
         >
           <BookmarkIcon filled={post.isSaved} />
+          <span className="hidden sm:inline">Save</span>
         </button>
       </div>
 
-     
-      {/* NEW COMMENT SECTION */}
+      {/* COMMENT SECTION */}
       {isExpanded && (
         <div 
           className="comment-section-wrapper"
@@ -656,7 +650,6 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
           /> 
         </div>
       )}
-    
     </div>
   );
 }
@@ -674,32 +667,32 @@ function TrendingItem({ title, count }) {
 }
 
 /*
-      CREATE POST MODAL
+      CREATE POST MODAL - Mobile Responsive
 */
 function CreatePostModal({ onClose }) {
   return (
     <div
       className="
         fixed inset-0 bg-[rgba(0,0,0,0.45)] backdrop-blur-sm
-        flex justify-center items-center z-[999] px-6
+        flex justify-center items-center z-[999] px-4 sm:px-6
         animate-fade-in
       "
       onClick={onClose}
     >
       <div
         className="
-          bg-white/80 backdrop-blur-md border border-ink/20 p-8 rounded-sm
+          bg-white/80 backdrop-blur-md border border-ink/20 p-6 sm:p-8 rounded-sm
           shadow-[0_8px_32px_rgba(0,0,0,0.22)]
           max-w-[600px] w-full
           animate-slide-up
         "
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="font-serif text-[28px] mb-6">
+        <h3 className="font-serif text-2xl sm:text-[28px] mb-4 sm:mb-6">
           Share Your Discovery
         </h3>
 
-        <p className="text-center text-sm opacity-60 mb-6">
+        <p className="text-center text-xs sm:text-sm opacity-60 mb-4 sm:mb-6">
           Go to Dashboard to upload and analyze a dataset, then publish it to the community!
         </p>
 
@@ -733,13 +726,6 @@ const HeartIcon = ({ filled }) => (
   </svg>
 );
 
-const ReplyIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="9 17 4 12 9 7" />
-    <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
-  </svg>
-);
-
 const BookmarkIcon = ({ filled }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
@@ -756,13 +742,5 @@ const EyeIcon = () => (
 const CommentIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-
-const UploadIcon = ({ className }) => (
-  <svg className={className} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="17 8 12 3 7 8" />
-    <line x1="12" y1="3" x2="12" y2="15" />
   </svg>
 );
