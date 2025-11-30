@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import json
 import pandas as pd
@@ -8,9 +7,8 @@ from scipy.optimize import curve_fit
 from scipy.fft import fft, fftfreq
 import random
 
-# =====================================================================
-# MAIN DISPATCH
-# =====================================================================
+# MAIN LOGIC
+
 
 def analyze_bitcoin_patterns(csv_path):
     try:
@@ -46,10 +44,8 @@ def analyze_bitcoin_patterns(csv_path):
     except Exception as e:
         return {'error': str(e)}
 
-
-# =====================================================================
 # PATTERN DETECTORS
-# =====================================================================
+
 
 def detect_fibonacci_retracements(df):
     prices = df['Close'].values
@@ -220,10 +216,8 @@ def calculate_statistics(df):
         'volatility': float(prices.std() / prices.mean() * 100)
     }
 
-
-# =====================================================================
 # FIBONACCI RINGS
-# =====================================================================
+
 
 def build_fibonacci_rings(prices, patterns):
     fib = patterns.get("fibonacci_retracements", {})
@@ -247,9 +241,9 @@ def build_fibonacci_rings(prices, patterns):
     return rings
 
 
-# =====================================================================
-# FIXED, SAFE, BEAUTIFUL 3D SPIRAL GENERATOR
-# =====================================================================
+
+#  3D SPIRAL GENERATOR
+
 
 def generate_visualization_data(df, patterns):
     prices = df["Close"].values.astype(float)
@@ -260,13 +254,13 @@ def generate_visualization_data(df, patterns):
     pmax = float(np.nanmax(prices))
     scale = (prices - pmin) / (pmax - pmin + 1e-9)
 
-    # --- Pick a visualization type -----------------------------------
+    # --- Pick a visualization type ----
     viz_type = random.choice(["data_ribbon", "golden_spiral", "candle_spiral"])
     # viz_type = "golden_spiral"   # <- uncomment to force a specific one
 
-    # ---------------------------------------------------------------
-    # 1) VERTICAL COLUMN (always works, backup)
-    # ---------------------------------------------------------------
+    
+    #  VERTICAL COLUMN 
+   
     def build_vertical_column():
         pts = []
         for i, p in enumerate(scale):
@@ -285,9 +279,9 @@ def generate_visualization_data(df, patterns):
             "camera_look_at": {"x": 0, "y": 50, "z": 0},
         }
 
-    # ---------------------------------------------------------------
-    # 2) DATA RIBBON (smooth spiral ribbon)
-    # ---------------------------------------------------------------
+    
+    # DATA RIBBON 
+  
     def build_data_ribbon():
         pts = []
         golden = 137.5 * np.pi / 180
@@ -309,9 +303,9 @@ def generate_visualization_data(df, patterns):
             "camera_look_at": {"x": 0, "y": 30, "z": 0},
         }
 
-    # ---------------------------------------------------------------
-    # 3) GOLDEN SPIRAL (top-to-bottom helix)
-    # ---------------------------------------------------------------
+   
+    #  GOLDEN SPIRAL 
+   
     def build_golden_spiral():
         pts = []
         golden = 137.5 * np.pi / 180
@@ -334,9 +328,9 @@ def generate_visualization_data(df, patterns):
             "camera_look_at": {"x": 0, "y": (len(prices)*0.05)/2, "z": 0},
         }
 
-    # ---------------------------------------------------------------
-    # 4) CANDLE SPIRAL (this is the red cylinder that already works)
-    # ---------------------------------------------------------------
+    
+    # CANDLE SPIRAL 
+    
     def build_candle_spiral():
         close = df["Close"].values
         high = df["High"].values if "High" in df else close
@@ -364,7 +358,7 @@ def generate_visualization_data(df, patterns):
             "camera_look_at": {"x": 0, "y": 20, "z": 0},
         }
 
-    # ---- dispatch table ----
+    # ---- dispatch table --
     mapping = {
         "vertical_column": build_vertical_column,
         "data_ribbon": build_data_ribbon,
@@ -378,11 +372,7 @@ def generate_visualization_data(df, patterns):
     except:
         return build_vertical_column()
 
-
-
-# =====================================================================
 # INSIGHTS
-# =====================================================================
 
 def generate_insights(patterns):
     insights = []
@@ -412,11 +402,8 @@ def generate_insights(patterns):
         insights.append(f"{golden['found_count']} golden ratio occurrences")
 
     return insights
-
-
-# =====================================================================
 # CLI
-# =====================================================================
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:

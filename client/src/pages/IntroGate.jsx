@@ -20,7 +20,7 @@ export default function IntroGate({ onEnter }) {
       opacity: 0.02 + Math.random() * 0.04,
       rotation: Math.random() * 360,
       animationDelay: Math.random() * 5,
-      animationDuration: 8 + Math.random() * 12, // Faster: 8-20s instead of 20-40s
+      animationDuration: 8 + Math.random() * 12, 
       // Random direction for movement
       direction: Math.random() > 0.5 ? 1 : -1,
       // Random horizontal drift
@@ -28,7 +28,7 @@ export default function IntroGate({ onEnter }) {
     }));
   }, []);
 
-  // Generate elegant spiral paths
+  // Generate spiral paths
   const spirals = useMemo(() => {
     return Array.from({ length: 8 }).map((_, i) => ({
       left: Math.random() * 90,
@@ -49,7 +49,7 @@ export default function IntroGate({ onEnter }) {
      */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
 
-        {/* ELEGANT SPIRALS WITH ROTATION */}
+        {/*SPIRALS WITH ROTATION */}
         {spirals.map((spiral, i) => (
           <svg
             key={`spiral-${i}`}
@@ -97,12 +97,12 @@ export default function IntroGate({ onEnter }) {
       </div>
 
       {/* 
-          ✧ CONTENT WRAPPER - Constrained width
+           CONTENT WRAPPER - Constrained width
       */}
       <div className="relative z-10 flex flex-col items-center w-full max-w-[90vw] sm:max-w-[600px] md:max-w-[720px]">
         
         {/* 
-            ✧ HANDWRITTEN SVG LOGO - Responsive sizing
+             HANDWRITTEN SVG LOGO - Responsive sizing
         */}
         <svg
           width="100%"
@@ -142,7 +142,7 @@ export default function IntroGate({ onEnter }) {
         </p>
 
         {/* 
-    ENTER BUTTON - Simple and centered
+    ENTER BUTTON 
 */}
         <button
           onClick={handleEnter}

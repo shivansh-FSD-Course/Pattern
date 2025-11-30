@@ -1,4 +1,3 @@
-// src/pages/Register.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";

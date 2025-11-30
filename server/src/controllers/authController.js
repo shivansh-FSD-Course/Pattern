@@ -181,7 +181,6 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// ✨ NEW: Update user profile
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 export const updateProfile = async (req, res) => {

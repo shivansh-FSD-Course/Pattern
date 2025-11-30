@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
@@ -115,7 +114,7 @@ export default function Login() {
 
       localStorage.setItem("user", JSON.stringify(userRes.data.user));
 
-      // 🔄 Redirect user to original target
+      //  Redirect user to original target
       navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error(err);

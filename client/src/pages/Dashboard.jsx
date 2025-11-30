@@ -1173,9 +1173,6 @@ function StatCard({ value, label }) {
 /* 
       COLLECTION CARD COMPONENT
  */
-/* 
-      COLLECTION CARD COMPONENT - With Mobile Support
- */
 function CollectionCard({ item, delay, onDelete }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -1258,7 +1255,7 @@ function CollectionCard({ item, delay, onDelete }) {
         <p className="text-xs opacity-60 mb-1">{item.type}</p>
         <p className="text-xs opacity-40">{item.date}</p>
 
-{/* Hover/Click Overlay - Better visibility */}
+{/* Hover/Click Overlay */}
 {isHovered && (
   <div 
     className="absolute inset-0 rounded-sm flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-4 animate-fade-in"

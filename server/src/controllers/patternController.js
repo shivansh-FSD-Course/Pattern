@@ -252,7 +252,6 @@ export const getCommunityPatterns = async (req, res) => {
   }
 };
 // Get user's own patterns
-// Get user's own patterns
 export const getUserPatterns = async (req, res) => {
   try {
     const patterns = await Pattern.find({ user: req.user._id })
