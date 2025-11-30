@@ -7,7 +7,9 @@ import { RENDERERS } from "./renderers";
 export default function PatternVisualization({ data }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
-  const [selectedRenderer, setSelectedRenderer] = useState("golden_spiral");
+  const [selectedRenderer, setSelectedRenderer] = useState(
+  data.visualization_data?.type?.startsWith('nasa_') ? "candle_spiral" : "golden_spiral"
+);
 
   if (!data || !data.visualization_data) {
     return (
@@ -176,59 +178,66 @@ export default function PatternVisualization({ data }) {
         </div>
       )}
 
-      {/* VISUALIZATION SELECTOR - Responsive */}
-      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20 flex flex-wrap gap-1 sm:gap-2 max-w-[90%]">
-        <button
-          onClick={() => setSelectedRenderer("golden_spiral")}
-          className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border transition ${
-            selectedRenderer === "golden_spiral"
-              ? "bg-accent-gold/30 border-accent-gold"
-              : "bg-white/10 border-white/30 hover:bg-white/20"
-          }`}
-          title="Wireframe Spiral"
-        >
-          <span className="hidden sm:inline">🌀 Spiral</span>
-          <span className="sm:hidden">🌀</span>
-        </button>
-        <button
-          onClick={() => setSelectedRenderer("data_ribbon")}
-          className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border transition ${
-            selectedRenderer === "data_ribbon"
-              ? "bg-accent-gold/30 border-accent-gold"
-              : "bg-white/10 border-white/30 hover:bg-white/20"
-          }`}
-          title="Flowing Ribbon"
-        >
-          <span className="hidden sm:inline">〰️ Ribbon</span>
-          <span className="sm:hidden">〰️</span>
-        </button>
-        <button
-          onClick={() => setSelectedRenderer("candle_spiral")}
-          className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border transition ${
-            selectedRenderer === "candle_spiral"
-              ? "bg-accent-gold/30 border-accent-gold"
-              : "bg-white/10 border-white/30 hover:bg-white/20"
-          }`}
-          title="Ring Tunnel"
-        >
-          <span className="hidden sm:inline">⭕ Rings</span>
-          <span className="sm:hidden">⭕</span>
-        </button>
-        
-        {/* LABELS TOGGLE */}
-        <button
-          onClick={() => {
-            if (mountRef.current?.toggleLabels) {
-              mountRef.current.toggleLabels();
-            }
-          }}
-          className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
-          title="Toggle Data Labels"
-        >
-          <span className="hidden sm:inline">🏷️ Labels</span>
-          <span className="sm:hidden">🏷️</span>
-        </button>
-      </div>
+      {/* VISUALIZATION SELECTOR */}
+<div className="absolute top-4 right-4 z-20 flex gap-2">
+  {/* Show all renderers for regular data */}
+  {!data.visualization_data?.type?.startsWith('nasa_') && (
+    <>
+      <button
+        onClick={() => setSelectedRenderer("golden_spiral")}
+        className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+          selectedRenderer === "golden_spiral"
+            ? "bg-accent-gold/30 border-accent-gold"
+            : "bg-white/10 border-white/30 hover:bg-white/20"
+        }`}
+        title="Wireframe Spiral"
+      >
+        <span className="hidden sm:inline">🌀 Spiral</span>
+        <span className="sm:hidden">🌀</span>
+      </button>
+      <button
+        onClick={() => setSelectedRenderer("data_ribbon")}
+        className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+          selectedRenderer === "data_ribbon"
+            ? "bg-accent-gold/30 border-accent-gold"
+            : "bg-white/10 border-white/30 hover:bg-white/20"
+        }`}
+        title="Flowing Ribbon"
+      >
+        <span className="hidden sm:inline">〰️ Ribbon</span>
+        <span className="sm:hidden">〰️</span>
+      </button>
+    </>
+  )}
+  
+  {/* Always show Rings - auto-select for NASA data */}
+  <button
+    onClick={() => setSelectedRenderer("candle_spiral")}
+    className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+      selectedRenderer === "candle_spiral"
+        ? "bg-accent-gold/30 border-accent-gold"
+        : "bg-white/10 border-white/30 hover:bg-white/20"
+    }`}
+    title="Ring Tunnel"
+  >
+    <span className="hidden sm:inline">⭕ Rings</span>
+    <span className="sm:hidden">⭕</span>
+  </button>
+  
+  {/* LABELS TOGGLE */}
+  <button
+    onClick={() => {
+      if (mountRef.current?.toggleLabels) {
+        mountRef.current.toggleLabels();
+      }
+    }}
+    className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
+    title="Toggle Data Labels"
+  >
+    <span className="hidden sm:inline">🏷️ Labels</span>
+    <span className="sm:hidden">🏷️</span>
+  </button>
+</div>
 
       <div ref={mountRef} className="w-full h-full" />
     </div>

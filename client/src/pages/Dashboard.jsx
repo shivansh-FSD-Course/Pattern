@@ -347,6 +347,41 @@ export default function Dashboard() {
       alert('Failed to publish pattern');
     }
   };
+  /* 
+      NASA DATA HANDLER
+  */
+  const handleNASAData = async (type) => {
+    setAnalyzing(true);
+    setUploadedFile({ name: `NASA ${type.toUpperCase()} Data` }); // Mock file for UI
+
+    try {
+      // Fetch NASA data
+      const nasaResponse = await api.get(`/patterns/nasa-data/${type}`);
+      
+      if (!nasaResponse.data.success) {
+        throw new Error('Failed to fetch NASA data');
+      }
+
+      // Analyze the NASA data
+      const analysisResponse = await api.post('/patterns/analyze-nasa', {
+        nasaData: nasaResponse.data.data,
+        type: type
+      });
+
+      if (analysisResponse.data.success) {
+        console.log('NASA Data Analyzed:', analysisResponse.data.data);
+        setAnalyzedData(analysisResponse.data.data);
+        setShowVisualization(true);
+        setAnalyzing(false);
+      }
+
+    } catch (error) {
+      console.error('NASA data analysis failed:', error);
+      alert(error.response?.data?.message || 'Failed to analyze NASA data');
+      setAnalyzing(false);
+      setUploadedFile(null);
+    }
+  };
 
   /* 
       FLOATING GLYPH BACKGROUND
@@ -815,7 +850,95 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        {/* NASA DATA BROWSER - NEW SECTION */}
+        <div 
+          className={`
+            transition-all duration-700 delay-200
+            ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+          `}
+        >
+          <div
+            className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
+            style={{ 
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '20'
+            }}
+          >
+            <h2 
+              className="font-serif text-[28px] mb-2"
+              style={{ color: 'var(--theme-primary)' }}
+            >
+              Explore NASA Data
+            </h2>
+            <p className="text-sm opacity-70 mb-6">
+              Don't have your own dataset? Discover patterns in space exploration data from NASA's public API
+            </p>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              
+              {/* Near-Earth Objects */}
+              <button
+                onClick={() => handleNASAData('neo')}
+                disabled={analyzing}
+                className="p-6 rounded-sm border-2 text-left transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  borderColor: 'var(--theme-primary)' + '40',
+                  backgroundColor: 'var(--theme-background)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!analyzing) e.currentTarget.style.borderColor = 'var(--theme-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--theme-primary)' + '40';
+                }}
+              >
+                <div className="text-4xl mb-3">☄️</div>
+                <h3 className="font-serif text-lg mb-2" style={{ color: 'var(--theme-primary)' }}>
+                  Asteroids
+                </h3>
+                <p className="text-xs opacity-60">
+                  Analyze Near-Earth Objects: size, velocity, and proximity patterns
+                </p>
+              </button>
+
+              {/* Placeholder for future APIs */}
+              <button
+                className="p-6 rounded-sm border-2 text-left opacity-50 cursor-not-allowed"
+                style={{
+                  borderColor: 'var(--theme-primary)' + '20',
+                  backgroundColor: 'var(--theme-background)'
+                }}
+                disabled
+              >
+                <div className="text-4xl mb-3">🌡️</div>
+                <h3 className="font-serif text-lg mb-2" style={{ color: 'var(--theme-primary)' }}>
+                  Mars Weather
+                </h3>
+                <p className="text-xs opacity-60">
+                  Coming soon: Temperature patterns on Mars
+                </p>
+              </button>
+
+              <button
+                className="p-6 rounded-sm border-2 text-left opacity-50 cursor-not-allowed"
+                style={{
+                  borderColor: 'var(--theme-primary)' + '20',
+                  backgroundColor: 'var(--theme-background)'
+                }}
+                disabled
+              >
+                <div className="text-4xl mb-3">🌌</div>
+                <h3 className="font-serif text-lg mb-2" style={{ color: 'var(--theme-primary)' }}>
+                  Deep Space
+                </h3>
+                <p className="text-xs opacity-60">
+                  Coming soon: Astronomical imagery data
+                </p>
+              </button>
+
+            </div>
+          </div>
+        </div>
         {/* MY COLLECTION */}
         <div 
           className={`

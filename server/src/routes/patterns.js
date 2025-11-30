@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import fetch from 'node-fetch'; // ← ADD THIS
+import fetch from 'node-fetch';
 import { 
   analyzePattern, 
   publishPattern, 
@@ -53,7 +53,7 @@ router.post('/:patternId/comments', protect, addComment);
 router.delete('/:patternId/comments/:commentId', protect, deleteComment);
 router.post('/:patternId/comments/:commentId/like', protect, likeComment);
 
-// NASA API routes ← ADD THESE TWO ROUTES
+// NASA API routes
 router.get('/nasa-data/:type', async (req, res) => {
   try {
     const { type } = req.params;
@@ -114,13 +114,63 @@ router.post('/analyze-nasa', async (req, res) => {
       return res.status(400).json({ success: false, message: 'No NASA data provided' });
     }
     
-    const points = nasaData.map((item, index) => {
+    console.log('=== NASA DATA DEBUG ===');
+    console.log('Total asteroids:', nasaData.length);
+    
+    // SAMPLE DATA - take only subset if too many points
+    let sampledData = nasaData;
+    const MAX_POINTS = 50;
+    
+    if (nasaData.length > MAX_POINTS) {
+      const step = Math.floor(nasaData.length / MAX_POINTS);
+      sampledData = nasaData.filter((_, index) => index % step === 0).slice(0, MAX_POINTS);
+    }
+    
+    console.log('Sampled to:', sampledData.length, 'points');
+    
+    // Convert NASA data to visualization points - MIXED SCALING
+    const points = sampledData.map((item, index) => {
       let x, y, z;
       
       if (type === 'neo') {
-        x = item.diameter / 1000;
-        y = item.velocity / 1000;
-        z = item.distance / 1000000;
+        // Use LOG scale for diameter and distance (huge ranges)
+        const logDiameter = Math.log10(item.diameter + 1);
+        const logDistance = Math.log10(item.distance + 1);
+        
+        // Use LINEAR scale for velocity (already similar values)
+        const velocity = item.velocity;
+        
+        // Find min/max
+        const allLogD = sampledData.map(a => Math.log10(a.diameter + 1));
+        const allVel = sampledData.map(a => a.velocity);
+        const allLogDist = sampledData.map(a => Math.log10(a.distance + 1));
+        
+        const minLogD = Math.min(...allLogD);
+        const maxLogD = Math.max(...allLogD);
+        const minVel = Math.min(...allVel);
+        const maxVel = Math.max(...allVel);
+        const minLogDist = Math.min(...allLogDist);
+        const maxLogDist = Math.max(...allLogDist);
+        
+        if (index === 0) {
+          console.log('=== RANGES ===');
+          console.log('Diameter (log):', minLogD.toFixed(2), '-', maxLogD.toFixed(2));
+          console.log('Velocity (linear):', minVel.toFixed(0), '-', maxVel.toFixed(0));
+          console.log('Distance (log):', minLogDist.toFixed(2), '-', maxLogDist.toFixed(2));
+        }
+        
+        const range = 80; // Fixed range
+        
+        // Normalize to range
+        x = ((logDiameter - minLogD) / (maxLogD - minLogD)) * (range * 2) - range;
+        y = ((velocity - minVel) / (maxVel - minVel)) * (range * 2) - range;
+        z = ((logDistance - minLogDist) / (maxLogDist - minLogDist)) * (range * 2) - range;
+        
+        if (index === 0) {
+          console.log('=== FIRST POINT ===');
+          console.log('Raw:', { d: item.diameter, v: item.velocity, dist: item.distance });
+          console.log('Final:', { x: x.toFixed(2), y: y.toFixed(2), z: z.toFixed(2) });
+        }
       } else {
         x = index;
         y = Object.values(item)[1] || Math.random() * 100;
@@ -130,6 +180,10 @@ router.post('/analyze-nasa', async (req, res) => {
       return { x, y, z };
     });
     
+    console.log('=== FINAL POINTS (first 5) ===');
+    console.log(points.slice(0, 5));
+    console.log('===================\n');
+    
     const insights = [];
     if (type === 'neo') {
       const hazardousCount = nasaData.filter(a => a.hazardous === 1).length;
@@ -138,6 +192,11 @@ router.post('/analyze-nasa', async (req, res) => {
       const maxDiameter = Math.max(...nasaData.map(a => a.diameter));
       
       insights.push(`Analyzed ${nasaData.length} Near-Earth Objects from NASA's database.`);
+      
+      if (sampledData.length < nasaData.length) {
+        insights.push(`Visualizing ${sampledData.length} representative asteroids for clarity.`);
+      }
+      
       insights.push(`${hazardousCount} potentially hazardous asteroids detected (${((hazardousCount/nasaData.length)*100).toFixed(1)}%).`);
       insights.push(`Average approach velocity: ${(avgVelocity/1000).toFixed(2)} thousand km/h.`);
       insights.push(`Average miss distance: ${(avgDistance/1000000).toFixed(2)} million km from Earth.`);
@@ -146,7 +205,7 @@ router.post('/analyze-nasa', async (req, res) => {
     
     const analysisResult = {
       dataset_type: type === 'neo' ? 'asteroid' : 'space',
-      patterns: ['orbital', 'celestial', 'exponential'],
+      patterns: ['orbital', 'celestial', 'distribution'],
       insights,
       visualization_data: {
         points,
