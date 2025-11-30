@@ -11,7 +11,7 @@ export default function PatternVisualization({ data }) {
 
   if (!data || !data.visualization_data) {
     return (
-      <div className="w-full h-[600px] bg-paper border flex items-center justify-center">
+      <div className="w-full h-[400px] sm:h-[500px] md:h-[600px] bg-paper border flex items-center justify-center rounded-sm">
         <p className="opacity-60 text-sm">No visualization data</p>
       </div>
     );
@@ -108,8 +108,6 @@ export default function PatternVisualization({ data }) {
     const renderFunc = RENDERERS[selectedRenderer].renderer;
     console.log("🎨 Renderer:", selectedRenderer);
 
-    // In PatternVisualization.jsx, update the update function section:
-
     let updateFn = () => {};
     let toggleLabelsFn = null;
 
@@ -165,53 +163,56 @@ export default function PatternVisualization({ data }) {
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [data, selectedRenderer]); // Re-render when renderer changes
+  }, [data, selectedRenderer]);
 
   return (
-    <div className="relative w-full h-[600px] bg-paper border rounded">
+    <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] bg-paper border rounded-sm overflow-hidden">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-paper/80 backdrop-blur-sm z-10">
           <div className="text-center">
-            <div className="text-4xl mb-2 animate-pulse">⚡</div>
-            <p className="text-sm">Rendering visualization…</p>
+            <div className="text-3xl sm:text-4xl mb-2 animate-pulse">⚡</div>
+            <p className="text-xs sm:text-sm">Rendering visualization…</p>
           </div>
         </div>
       )}
 
-      {/* VISUALIZATION SELECTOR */}
-      <div className="absolute top-4 right-4 z-20 flex gap-2">
+      {/* VISUALIZATION SELECTOR - Responsive */}
+      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20 flex flex-wrap gap-1 sm:gap-2 max-w-[90%]">
         <button
           onClick={() => setSelectedRenderer("golden_spiral")}
-          className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+          className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border transition ${
             selectedRenderer === "golden_spiral"
               ? "bg-accent-gold/30 border-accent-gold"
               : "bg-white/10 border-white/30 hover:bg-white/20"
           }`}
           title="Wireframe Spiral"
         >
-          🌀 Spiral
+          <span className="hidden sm:inline">🌀 Spiral</span>
+          <span className="sm:hidden">🌀</span>
         </button>
         <button
           onClick={() => setSelectedRenderer("data_ribbon")}
-          className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+          className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border transition ${
             selectedRenderer === "data_ribbon"
               ? "bg-accent-gold/30 border-accent-gold"
               : "bg-white/10 border-white/30 hover:bg-white/20"
           }`}
           title="Flowing Ribbon"
         >
-          〰️ Ribbon
+          <span className="hidden sm:inline">〰️ Ribbon</span>
+          <span className="sm:hidden">〰️</span>
         </button>
         <button
           onClick={() => setSelectedRenderer("candle_spiral")}
-          className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+          className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border transition ${
             selectedRenderer === "candle_spiral"
               ? "bg-accent-gold/30 border-accent-gold"
               : "bg-white/10 border-white/30 hover:bg-white/20"
           }`}
           title="Ring Tunnel"
         >
-          ⭕ Rings
+          <span className="hidden sm:inline">⭕ Rings</span>
+          <span className="sm:hidden">⭕</span>
         </button>
         
         {/* LABELS TOGGLE */}
@@ -221,14 +222,15 @@ export default function PatternVisualization({ data }) {
               mountRef.current.toggleLabels();
             }
           }}
-          className="px-3 py-1.5 text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
+          className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
           title="Toggle Data Labels"
         >
-          🏷️ Labels
+          <span className="hidden sm:inline">🏷️ Labels</span>
+          <span className="sm:hidden">🏷️</span>
         </button>
       </div>
 
-    <div ref={mountRef} className="w-full h-full" />
-  </div>
-);
+      <div ref={mountRef} className="w-full h-full" />
+    </div>
+  );
 }

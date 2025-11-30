@@ -1173,6 +1173,9 @@ function StatCard({ value, label }) {
 /* 
       COLLECTION CARD COMPONENT
  */
+/* 
+      COLLECTION CARD COMPONENT - With Mobile Support
+ */
 function CollectionCard({ item, delay, onDelete }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -1226,12 +1229,18 @@ function CollectionCard({ item, delay, onDelete }) {
     setShowVisualization(!showVisualization);
   };
 
+  // Toggle buttons on click for mobile
+  const handleCardClick = () => {
+    setIsHovered(!isHovered);
+  };
+
   return (
     <>
       <div
         ref={cardRef}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
         className={`
           relative rounded-sm border p-4
           hover:shadow-lg transition-all duration-500 cursor-pointer
@@ -1243,83 +1252,109 @@ function CollectionCard({ item, delay, onDelete }) {
           transitionDelay: isVisible ? `${delay}s` : '0s',
         }}
       >
-        <div className="text-5xl text-center mb-3">{item.thumbnail}</div>
+        <div className="text-4xl sm:text-5xl text-center mb-3">{item.thumbnail}</div>
         
         <h4 className="font-serif text-sm mb-1 line-clamp-2">{item.title}</h4>
         <p className="text-xs opacity-60 mb-1">{item.type}</p>
         <p className="text-xs opacity-40">{item.date}</p>
 
-        {isHovered && (
-          <div className="absolute inset-0 rounded-sm flex items-center justify-center gap-3 animate-fade-in"
-            style={{ backgroundColor: 'var(--theme-primary)' + 'E6' }}
-          >
-            <button 
-              onClick={handleView}
-              className="text-white text-xs px-3 py-1.5 border border-white/30 rounded-sm hover:bg-white/10 transition"
-            >
-              View
-            </button>
-            <button 
-              onClick={handleDelete}
-              className="text-white text-xs px-3 py-1.5 border border-red-400/50 rounded-sm hover:bg-red-500/70 transition"
-            >
-              Delete
-            </button>
-          </div>
-        )}
+{/* Hover/Click Overlay - Better visibility */}
+{isHovered && (
+  <div 
+    className="absolute inset-0 rounded-sm flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-4 animate-fade-in"
+    style={{ 
+      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      backdropFilter: 'blur(4px)'
+    }}
+  >
+    <button 
+      onClick={handleView}
+      className="w-full sm:w-auto text-white text-xs sm:text-sm px-4 py-2 rounded-sm transition font-medium"
+      style={{
+        backgroundColor: 'var(--theme-primary)',
+        border: '2px solid white'
+      }}
+      onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+      onMouseLeave={(e) => e.target.style.opacity = '1'}
+    >
+       View
+    </button>
+    <button 
+      onClick={handleDelete}
+      className="w-full sm:w-auto text-white text-xs sm:text-sm px-4 py-2 bg-red-600 rounded-sm transition font-medium"
+      style={{
+        border: '2px solid white'
+      }}
+      onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
+      onMouseLeave={(e) => e.target.style.backgroundColor = '#dc2626'}
+    >
+       Delete
+    </button>
+  </div>
+)}
       </div>
 
+      {/* Visualization Modal */}
       {showVisualization && item.analysisData && (
         <div
-          className="fixed inset-0 bg-[rgba(0,0,0,0.7)] backdrop-blur-sm flex justify-center items-center z-[999] px-6 animate-fade-in"
+          className="fixed inset-0 bg-[rgba(0,0,0,0.7)] backdrop-blur-sm flex justify-center items-center z-[999] p-4 sm:p-6 animate-fade-in"
           onClick={() => setShowVisualization(false)}
         >
           <div
-            className="backdrop-blur-md border p-6 rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] max-w-[900px] w-full max-h-[90vh] overflow-y-auto animate-slide-up"
+            className="backdrop-blur-md border rounded-sm shadow-[0_8px_32px_rgba(0,0,0,0.22)] w-full max-w-[900px] max-h-[90vh] overflow-y-auto animate-slide-up"
             style={{ 
               backgroundColor: 'var(--theme-card)',
               borderColor: 'var(--theme-primary)' + '40'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-start mb-4">
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 p-4 sm:p-6 border-b flex justify-between items-start"
+              style={{ 
+                backgroundColor: 'var(--theme-card)',
+                borderColor: 'var(--theme-primary)' + '20'
+              }}
+            >
               <h3 
-                className="font-serif text-[26px]"
+                className="font-serif text-xl sm:text-[26px] pr-4"
                 style={{ color: 'var(--theme-primary)' }}
               >
                 {item.title}
               </h3>
               <button
                 onClick={() => setShowVisualization(false)}
-                className="text-2xl hover:opacity-70 transition"
+                className="text-2xl sm:text-3xl hover:opacity-70 transition flex-shrink-0"
               >
                 ×
               </button>
             </div>
 
-            {item.analysisData.insights && (
-              <div 
-                className="p-4 rounded-sm mb-4 border"
-                style={{
-                  background: `linear-gradient(to right, var(--theme-primary)15, var(--theme-accent)15)`,
-                  borderColor: 'var(--theme-primary)' + '20'
-                }}
-              >
-                <h4 
-                  className="font-serif text-lg mb-3 flex items-center gap-2"
-                  style={{ color: 'var(--theme-primary)' }}
+            {/* Modal Content */}
+            <div className="p-4 sm:p-6">
+              {item.analysisData.insights && (
+                <div 
+                  className="p-3 sm:p-4 rounded-sm mb-4 border"
+                  style={{
+                    background: `linear-gradient(to right, var(--theme-primary)15, var(--theme-accent)15)`,
+                    borderColor: 'var(--theme-primary)' + '20'
+                  }}
                 >
-                  <span>🔍</span> Key Discoveries
-                </h4>
-                <div className="space-y-2">
-                  {item.analysisData.insights.map((insight, i) => (
-                    <p key={i} className="text-sm leading-relaxed">{insight}</p>
-                  ))}
+                  <h4 
+                    className="font-serif text-base sm:text-lg mb-3 flex items-center gap-2"
+                    style={{ color: 'var(--theme-primary)' }}
+                  >
+                    <span>🔍</span> Key Discoveries
+                  </h4>
+                  <div className="space-y-2">
+                    {item.analysisData.insights.map((insight, i) => (
+                      <p key={i} className="text-xs sm:text-sm leading-relaxed">{insight}</p>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <PatternVisualization data={item.analysisData} />
+              <PatternVisualization data={item.analysisData} />
+            </div>
           </div>
         </div>
       )}

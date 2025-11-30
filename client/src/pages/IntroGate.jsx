@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function IntroGate({ onEnter }) {
   const [exiting, setExiting] = useState(false);
@@ -8,29 +8,63 @@ export default function IntroGate({ onEnter }) {
     setTimeout(onEnter, 900);
   };
 
+  // Generate random mathematical symbols scattered across the screen
+  const mathSymbols = useMemo(() => {
+    const symbols = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ", "α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "κ", "μ", "ν", "ξ", "ρ", "σ", "τ", "ω", "Γ", "Δ", "Θ", "Λ", "Ξ", "Π", "Σ", "Φ", "Ψ", "Ω"];
+    
+    return Array.from({ length: 50 }).map((_, i) => ({
+      char: symbols[Math.floor(Math.random() * symbols.length)],
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: 30 + Math.random() * 40,
+      opacity: 0.02 + Math.random() * 0.04,
+      rotation: Math.random() * 360,
+      animationDelay: Math.random() * 5,
+      animationDuration: 8 + Math.random() * 12, // Faster: 8-20s instead of 20-40s
+      // Random direction for movement
+      direction: Math.random() > 0.5 ? 1 : -1,
+      // Random horizontal drift
+      drift: (Math.random() - 0.5) * 40,
+    }));
+  }, []);
+
+  // Generate elegant spiral paths
+  const spirals = useMemo(() => {
+    return Array.from({ length: 8 }).map((_, i) => ({
+      left: Math.random() * 90,
+      top: Math.random() * 90,
+      size: 300 + Math.random() * 200,
+      opacity: 0.03 + Math.random() * 0.03,
+      rotation: Math.random() * 360,
+      animationDelay: Math.random() * 3,
+      animationDuration: 15 + Math.random() * 15,
+    }));
+  }, []);
+
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-paper text-ink overflow-hidden">
+    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-paper text-ink overflow-hidden px-4">
     
       {/*
           ✧ FLOATING MATHEMATICAL FIELD 
      */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
 
-        {/* SIX LARGE SPIRALS */}
-        {[
-          ["left-[10%] top-[12%] w-[480px] opacity-[0.06]"],
-          ["right-[8%] top-[18%] w-[390px] opacity-[0.045]"],
-          ["left-[22%] bottom-[10%] w-[420px] opacity-[0.055]"],
-          ["right-[25%] bottom-[16%] w-[380px] opacity-[0.05]"],
-          ["left-[48%] top-[40%] w-[520px] opacity-[0.035]"],
-          ["right-[45%] bottom-[38%] w-[460px] opacity-[0.045]"],
-        ].map((style, i) => (
+        {/* ELEGANT SPIRALS WITH ROTATION */}
+        {spirals.map((spiral, i) => (
           <svg
-            key={i}
+            key={`spiral-${i}`}
             viewBox="0 0 400 400"
-            className={`absolute ${style} stroke-ink math-float`}
+            className="absolute stroke-ink"
+            style={{
+              left: `${spiral.left}%`,
+              top: `${spiral.top}%`,
+              width: `${spiral.size}px`,
+              opacity: spiral.opacity,
+              animation: `spiralFloat ${spiral.animationDuration}s ease-in-out infinite, spiralRotate ${spiral.animationDuration * 2}s linear infinite`,
+              animationDelay: `${spiral.animationDelay}s`,
+            }}
             fill="none"
-            strokeWidth="1.15"
+            strokeWidth="1.2"
           >
             <path d="M200 200 
             Q200 120 280 120
@@ -41,94 +75,90 @@ export default function IntroGate({ onEnter }) {
           </svg>
         ))}
 
-        {/* FLOATING GLYPHS */}
-        {[
-          ["φ", "left-[6%]  top-[28%]"],
-          ["π", "left-[32%] top-[14%]"],
-          ["∞", "right-[30%] top-[20%]"],
-          ["Σ", "right-[12%] top-[44%]"],
-          ["μ", "left-[14%] bottom-[22%]"],
-          ["∂", "right-[18%] bottom-[19%]"],
-          ["λ", "left-[45%] bottom-[10%]"],
-          ["β", "right-[44%] top-[8%]"],
-          ["Ω", "left-[50%] top-[70%]"],
-          ["σ", "right-[6%] top-[60%]"],
-          ["θ", "left-[28%] bottom-[34%]"],
-          ["γ", "right-[32%] bottom-[28%]"],
-        ].map(([glyph, pos], i) => (
+        {/* SCATTERED MATHEMATICAL SYMBOLS WITH VISIBLE MOVEMENT */}
+        {mathSymbols.map((symbol, i) => (
           <span
-            key={i}
-            className={`absolute ${pos} text-[50px] font-serif opacity-[0.045] math-float`}
+            key={`symbol-${i}`}
+            className="absolute font-serif select-none"
+            style={{
+              left: `${symbol.left}%`,
+              top: `${symbol.top}%`,
+              fontSize: `${symbol.size}px`,
+              opacity: symbol.opacity,
+              animation: `mathFloat ${symbol.animationDuration}s ease-in-out infinite`,
+              animationDelay: `${symbol.animationDelay}s`,
+              '--drift': `${symbol.drift}px`,
+              '--direction': symbol.direction,
+            }}
           >
-            {glyph}
+            {symbol.char}
           </span>
         ))}
       </div>
 
       {/* 
-          ✧ HANDWRITTEN SVG LOGO
+          ✧ CONTENT WRAPPER - Constrained width
       */}
-      <svg
-        width="720"
-        height="130"
-        viewBox="0 0 720 130"
-        className={`mb-6 transition-opacity duration-500 ${
-          exiting ? "opacity-0" : ""
-        }`}
-      >
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fontFamily="'Dancing Script', cursive"
-          fontSize="100"
-          stroke="#2C2C2C"
-          strokeWidth="2"
-          fill="transparent"
-          className="pc-write"
-          style={{
-            strokeDasharray: 1600,
-            strokeDashoffset: 1600,
-          }}
+      <div className="relative z-10 flex flex-col items-center w-full max-w-[90vw] sm:max-w-[600px] md:max-w-[720px]">
+        
+        {/* 
+            ✧ HANDWRITTEN SVG LOGO - Responsive sizing
+        */}
+        <svg
+          width="100%"
+          height="auto"
+          viewBox="0 0 720 130"
+          className={`mb-4 sm:mb-6 transition-opacity duration-500 ${
+            exiting ? "opacity-0" : ""
+          }`}
+          preserveAspectRatio="xMidYMid meet"
         >
-          PATTERNCRAFT
-        </text>
-      </svg>
+          <text
+            x="50%"
+            y="50%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontFamily="'Dancing Script', cursive"
+            fontSize="100"
+            stroke="#2C2C2C"
+            strokeWidth="2"
+            fill="transparent"
+            className="pc-write"
+            style={{
+              strokeDasharray: 1600,
+              strokeDashoffset: 1600,
+            }}
+          >
+            PATTERNCRAFT
+          </text>
+        </svg>
 
-      {/* SUBTITLE */}
-      <p
-        className={`font-serif text-lg opacity-0
-        ${!exiting ? "animate-[fadeIn_1s_ease-out_2.6s_forwards]" : ""}`}
-      >
-        Where numbers become art
-      </p>
+        {/* SUBTITLE - Responsive text size */}
+        <p
+          className={`font-serif text-sm sm:text-base md:text-lg opacity-0 text-center px-4
+          ${!exiting ? "animate-[fadeIn_1s_ease-out_2.6s_forwards]" : ""}`}
+        >
+          Where numbers become art
+        </p>
 
-      {/* 
-          ENTER BUTTON
-      */}
-      <button
-        onClick={handleEnter}
-        className={`
-          mt-10 px-8 py-3 border border-ink/40 rounded-sm
-          text-ink/70 text-sm tracking-wide font-sans
-          transition-all duration-300
-          hover:border-ink hover:bg-ink hover:text-paper
-          group relative opacity-0
-          ${!exiting ? "animate-[fadeIn_1s_ease-out_3.3s_forwards]" : ""}
-        `}
-      >
-        ENTER
-        <span
-          className="
-            absolute -right-6 top-1/2 -translate-y-1/2
-            opacity-0 group-hover:opacity-100
+        {/* 
+    ENTER BUTTON - Simple and centered
+*/}
+        <button
+          onClick={handleEnter}
+          className={`
+            mt-8 sm:mt-10 px-12 py-3
+            border-2 border-ink/40 rounded-sm
+            text-ink font-sans text-sm tracking-widest uppercase
+            hover:bg-ink hover:text-paper hover:border-ink
             transition-all duration-300
-          "
+            opacity-0
+            ${!exiting ? "animate-[fadeIn_1s_ease-out_3.3s_forwards]" : ""}
+          `}
         >
-          ➜
-        </span>
-      </button>
+          Enter
+        </button>
+      </div>
 
       {/* EXIT FLASH */}
       <div
