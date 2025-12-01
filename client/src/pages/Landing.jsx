@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useMemo, useEffect, useRef, useState } from "react";
+import { getSelectedTheme, applyTheme } from '../utils/themes';
 
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
@@ -7,6 +8,11 @@ export default function Landing() {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
   const [trails, setTrails] = useState([]);
+  const [selectedTheme, setSelectedTheme] = useState(getSelectedTheme());
+
+  useEffect(() => {
+    applyTheme(selectedTheme);
+  }, [selectedTheme]);
 
   // Check if token exists (user logged in)
   const token = localStorage.getItem("token");
@@ -68,6 +74,7 @@ export default function Landing() {
   return (
     <div 
       className="relative w-full min-h-screen bg-paper text-ink overflow-hidden"
+      style={{ backgroundColor: 'var(--theme-background)' }}
       onMouseMove={handleMouseMove}
     >
       {/* CURSOR TRAIL */}

@@ -71,10 +71,22 @@ const [loadingStats, setLoadingStats] = useState(true);
   }, [selectedTheme]);
 
   // Handle theme change
-  const handleThemeChange = (themeName) => {
-    setSelectedTheme(themeName);
-    applyTheme(themeName);
-  };
+const handleThemeChange = async (themeName) => {
+  setSelectedTheme(themeName);
+  applyTheme(themeName);
+  
+  // Immediately save to backend
+  try {
+    const token = localStorage.getItem('token');
+    await api.put('/auth/profile', {
+      theme: themeName
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch (error) {
+    console.error('Failed to save theme:', error);
+  }
+};
 
   /* 
       LOAD PROFILE ON MOUNT

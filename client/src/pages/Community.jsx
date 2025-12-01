@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import api from "../api/axios";
 import PatternVisualization from "../components/PatternVisualization";
 import CommentSection from '../components/CommentSection';
+import { getSelectedTheme, applyTheme } from '../utils/themes';
+
 const GLYPHS = ["φ","π","∑","∞","ψ","∂","√","≡","∫","λ"];
 
 // Pattern type configurations
@@ -66,6 +68,13 @@ export default function Community() {
   const [expandedPost, setExpandedPost] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTheme, setSelectedTheme] = useState(getSelectedTheme());  
+
+  // Apply theme on mount
+  useEffect(() => {
+    applyTheme(selectedTheme);
+  }, [selectedTheme]); 
+
 
   // Live activity feed
   const [activities] = useState([
@@ -225,6 +234,7 @@ export default function Community() {
   return (
     <div 
       className="relative min-h-screen w-full bg-paper text-ink overflow-y-auto pb-32"
+      style={{ backgroundColor: 'var(--theme-background)' }}
       onMouseMove={handleMouseMove}
     >
       {/* CURSOR TRAIL */}
@@ -273,15 +283,19 @@ export default function Community() {
         </p>
       </header>
 
-      {/* SEARCH & FILTER BAR/*/}
+      {/* SEARCH & FILTER BAR */}
       <div className="relative z-20 px-4 sm:px-8 md:px-12 mb-8">
         <div 
           className={`
-            bg-white/65 backdrop-blur-sm border border-ink/15 rounded-sm p-3 sm:p-4
+            backdrop-blur-sm border rounded-sm p-3 sm:p-4
             shadow-[0_6px_20px_rgba(0,0,0,0.06)]
             transition-all duration-700
             ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
           `}
+          style={{
+            backgroundColor: 'var(--theme-card)',
+            borderColor: 'var(--theme-primary)' + '20'
+          }}
         >
           <div className="flex flex-col gap-3">
             {/* Search */}
@@ -293,9 +307,13 @@ export default function Community() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="
-                  w-full pl-10 pr-4 py-2 border border-ink/25 rounded-sm text-sm
-                  bg-white/70 outline-none focus:border-ink transition
+                  w-full pl-10 pr-4 py-2 border rounded-sm text-sm
+                  outline-none focus:border-ink transition
                 "
+                style={{
+                  backgroundColor: 'var(--theme-background)',
+                  borderColor: 'var(--theme-primary)' + '40'
+                }}
               />
             </div>
 
@@ -400,13 +418,20 @@ export default function Community() {
           {/* LIVE ACTIVITY FEED */}
           <div
             className={`
-              bg-white/60 backdrop-blur-sm border border-ink/20 rounded-sm
+              backdrop-blur-sm border rounded-sm
               shadow-[0_8px_24px_rgba(0,0,0,0.07)] p-6
               transition-all duration-700 delay-100
               ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
             `}
+            style={{
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '20'
+            }}
           >
-            <h3 className="font-serif text-[22px] mb-4 flex items-center gap-2">
+            <h3 
+              className="font-serif text-[22px] mb-4 flex items-center gap-2"
+              style={{ color: 'var(--theme-primary)' }}
+            >
               <span className="animate-pulse">🔴</span> Live Activity
             </h3>
             <div className="space-y-3">
@@ -414,7 +439,7 @@ export default function Community() {
                 <div key={i} className="text-sm flex items-start gap-2 opacity-75 hover:opacity-100 transition">
                   <span className="text-xs opacity-50 mt-0.5">{activity.time}</span>
                   <p>
-                    <strong>@{activity.user}</strong> {activity.action} <span className="text-accent-green">{activity.pattern}</span>
+                    <strong>@{activity.user}</strong> {activity.action} <span style={{ color: 'var(--theme-primary)' }}>{activity.pattern}</span>
                   </p>
                 </div>
               ))}
@@ -424,13 +449,22 @@ export default function Community() {
           {/* PATTERN TYPES LEGEND */}
           <div
             className={`
-              bg-white/60 backdrop-blur-sm border border-ink/20 rounded-sm
+              backdrop-blur-sm border rounded-sm
               shadow-[0_8px_24px_rgba(0,0,0,0.07)] p-6
               transition-all duration-700 delay-200
               ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
             `}
+            style={{
+              backgroundColor: 'var(--theme-card)',
+              borderColor: 'var(--theme-primary)' + '20'
+            }}
           >
-            <h3 className="font-serif text-[22px] mb-4">Pattern Types</h3>
+            <h3 
+              className="font-serif text-[22px] mb-4"
+              style={{ color: 'var(--theme-primary)' }}
+            >
+              Pattern Types
+            </h3>
             <div className="space-y-2">
               {Object.entries(PATTERN_TYPES).map(([key, type]) => (
                 <div key={key} className="flex items-center gap-2">
@@ -447,30 +481,39 @@ export default function Community() {
           </div>
 
           {/* TRENDING PATTERNS */}
-          <div
-            className={`
-              bg-white/60 backdrop-blur-sm border border-ink/20 rounded-sm
-              shadow-[0_8px_24px_rgba(0,0,0,0.07)] p-6
-              transition-all duration-700 delay-300
-              ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-            `}
-          >
-            <h3 className="font-serif text-[22px] mb-4">Trending 🔥</h3>
-            <div className="space-y-3">
-              <TrendingItem title="Bitcoin Analysis" count={posts.filter(p => p.patternType === 'bitcoin').length} />
-              <TrendingItem title="Golden Ratio" count={posts.filter(p => p.patternType === 'golden').length} />
-              <TrendingItem title="Fibonacci" count={posts.filter(p => p.patternType === 'fibonacci').length} />
-            </div>
-          </div>
-        </div>
+<div
+  className={`
+    backdrop-blur-sm border rounded-sm
+    shadow-[0_8px_24px_rgba(0,0,0,0.07)] p-6
+    transition-all duration-700 delay-300
+    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+  `}
+  style={{
+    backgroundColor: 'var(--theme-card)',
+    borderColor: 'var(--theme-primary)' + '20'
+  }}
+>
+  <h3 
+    className="font-serif text-[22px] mb-4"
+    style={{ color: 'var(--theme-primary)' }}
+  >
+    Trending 🔥
+  </h3>
+  <div className="space-y-3">
+    <TrendingItem title="Bitcoin Analysis" count={posts.filter(p => p.patternType === 'bitcoin').length} />
+    <TrendingItem title="Golden Ratio" count={posts.filter(p => p.patternType === 'golden').length} />
+    <TrendingItem title="Fibonacci" count={posts.filter(p => p.patternType === 'fibonacci').length} />
+  </div>
+</div>
       </div>
-
-      {/* CREATE POST MODAL */}
-      {showCreatePost && (
-        <CreatePostModal onClose={() => setShowCreatePost(false)} />
-      )}
     </div>
-  );
+
+    {/* CREATE POST MODAL */}
+    {showCreatePost && (
+      <CreatePostModal onClose={() => setShowCreatePost(false)} />
+    )}
+  </div>
+);
 }
 
 /* 
