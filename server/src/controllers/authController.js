@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import Pattern from '../models/Pattern.js';
 
 // Generate JWT Token
 const generateToken = (userId) => {
@@ -231,6 +232,41 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during profile update',
+    });
+  }
+};
+// @desc    Get user statistics
+// @route   GET /api/auth/stats
+export const getUserStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Count patterns created by this user (Pattern is already imported at top)
+    const patternsFound = await Pattern.countDocuments({ user: userId });
+
+    // Count total uploads (same as patterns for now)
+    const totalUploads = patternsFound;
+
+    // Calculate days active (days since account creation)
+    const user = await User.findById(userId);
+    const accountCreatedDate = user.createdAt;
+    const today = new Date();
+    const daysActive = Math.floor((today - accountCreatedDate) / (1000 * 60 * 60 * 24));
+
+    res.json({
+      success: true,
+      stats: {
+        patternsFound,
+        daysActive,
+        totalUploads
+      }
+    });
+
+  } catch (error) {
+    console.error('Failed to fetch user stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch statistics'
     });
   }
 };
