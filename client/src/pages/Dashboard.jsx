@@ -58,11 +58,12 @@ export default function Dashboard() {
   const [loadingCollection, setLoadingCollection] = useState(true);
 
   // Stats
-  const stats = {
-    patternsFound: 47,
-    daysActive: 23,
-    totalUploads: 12,
-  };
+const [stats, setStats] = useState({
+  patternsFound: 0,
+  daysActive: 0,
+  totalUploads: 0,
+});
+const [loadingStats, setLoadingStats] = useState(true);
 
   // Apply theme on mount and when changed
   useEffect(() => {
@@ -206,15 +207,41 @@ const handleSaveProfile = async () => {
       setLoadingCollection(false);
     }
   };
+  /* 
+    FETCH USER'S STATS FROM DATABASE
+*/
+const fetchUserStats = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const res = await api.get('/auth/stats', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data.success) {
+      setStats({
+        patternsFound: res.data.stats.patternsFound || 0,
+        daysActive: res.data.stats.daysActive || 0,
+        totalUploads: res.data.stats.totalUploads || 0,
+      });
+    }
+    setLoadingStats(false);
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+    setLoadingStats(false);
+  }
+};
 
   /* Mount animation trigger */
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  /* Fetch user's patterns on mount */
+/* Fetch user's patterns on mount */
   useEffect(() => {
     fetchMyPatterns();
+    fetchUserStats(); // Add this line
   }, []);
 
   /* Scroll handler for parallax */
@@ -344,6 +371,7 @@ const handleSaveProfile = async () => {
         alert('Pattern published to community! ✨');
         
         await fetchMyPatterns();
+        await fetchUserStats()
         
         setShowPublishModal(false);
         setPatternTitle('');
@@ -582,13 +610,19 @@ const handleSaveProfile = async () => {
               >
                 Your Statistics
               </h2>
-              <div className="grid grid-cols-3 gap-4">
-                <StatCard value={stats.patternsFound} label="Patterns Found" />
-                <StatCard value={stats.daysActive} label="Days Active" />
-                <StatCard value={stats.totalUploads} label="Total Uploads" />
-              </div>
+              {loadingStats ? (
+                <div className="text-center py-8 opacity-60">
+                  <div className="text-3xl mb-2 animate-pulse">📊</div>
+                  <p className="text-sm">Loading stats...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4">
+                  <StatCard value={stats.patternsFound} label="Patterns Found" />
+                  <StatCard value={stats.daysActive} label="Days Active" />
+                  <StatCard value={stats.totalUploads} label="Total Uploads" />
+                </div>
+              )}
             </div>
-
             {/* THEME SELECTOR */}
             <div
               className="backdrop-blur-sm rounded-sm border shadow-[0_8px_28px_rgba(0,0,0,0.07)] p-6"
@@ -1028,6 +1062,7 @@ const handleSaveProfile = async () => {
                     onDelete={(deletedId) => {
                       setMyCollection(myCollection.filter(p => p.id !== deletedId));
                     }}
+                    onStatsUpdate={fetchUserStats}
                   />
                 ))}
               </div>
@@ -1306,7 +1341,7 @@ function StatCard({ value, label }) {
 /* 
       COLLECTION CARD COMPONENT
  */
-function CollectionCard({ item, delay, onDelete }) {
+function CollectionCard({ item, delay, onDelete, onStatsUpdate }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showVisualization, setShowVisualization] = useState(false);
@@ -1348,6 +1383,7 @@ function CollectionCard({ item, delay, onDelete }) {
 
       onDelete(item.id);
       alert('Pattern deleted! ✓');
+      if (onStatsUpdate) onStatsUpdate();
     } catch (error) {
       console.error('Delete failed:', error);
       alert(error.response?.data?.message || 'Failed to delete pattern.');
