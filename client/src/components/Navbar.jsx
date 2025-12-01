@@ -1,13 +1,19 @@
 // src/components/Navbar.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const token = localStorage.getItem("token");
   const user = token ? JSON.parse(localStorage.getItem("user") || "{}") : null;
+
+  // Determine if we're on a light background page
+  const isLightPage = ['/home','/myspace', '/community'].includes(location.pathname);
+  const textColor = isLightPage ? 'text-ink' : 'text-white';
+  const hoverColor = isLightPage ? 'hover:text-accent-gold' : 'hover:text-cyan-300';
 
   const goHome = () => {
     navigate("/home");
@@ -53,22 +59,22 @@ export default function Navbar() {
       </button>
 
       {/* DESKTOP NAV - hidden on mobile */}
-      <nav className="hidden md:flex gap-8 text-lg text-white">
+      <nav className="hidden md:flex gap-8 text-lg">
         <button
           onClick={goMySpace}
-          className="hover:text-cyan-300 transition"
+          className={`${textColor} ${hoverColor} transition`}
         >
           {token && user?.username ? `@${user.username}` : "My Space"}
         </button>
 
         {!token ? (
-          <button onClick={goLogin} className="hover:text-cyan-300 transition">
+          <button onClick={goLogin} className={`${textColor} ${hoverColor} transition`}>
             Login
           </button>
         ) : (
           <button
             onClick={handleLogout}
-            className="hover:text-red-300 transition"
+            className={`${textColor} hover:text-red-500 transition`}
           >
             Logout
           </button>
@@ -76,7 +82,7 @@ export default function Navbar() {
 
         <button
           onClick={goCommunity}
-          className="hover:text-cyan-300 transition"
+          className={`${textColor} ${hoverColor} transition`}
         >
           Community
         </button>
@@ -89,18 +95,18 @@ export default function Navbar() {
         aria-label="Toggle menu"
       >
         <span 
-          className={`w-6 h-0.5 bg-ink transition-all duration-300 ${
-            isMenuOpen ? 'rotate-45 translate-y-2 bg-white' : ''
+          className={`w-6 h-0.5 transition-all duration-300 ${
+            isMenuOpen ? 'rotate-45 translate-y-2 bg-white' : isLightPage ? 'bg-ink' : 'bg-white'
           }`}
         />
         <span 
-          className={`w-6 h-0.5 bg-ink transition-all duration-300 ${
-            isMenuOpen ? 'opacity-0' : ''
+          className={`w-6 h-0.5 transition-all duration-300 ${
+            isMenuOpen ? 'opacity-0' : isLightPage ? 'bg-ink' : 'bg-white'
           }`}
         />
         <span 
-          className={`w-6 h-0.5 bg-ink transition-all duration-300 ${
-            isMenuOpen ? '-rotate-45 -translate-y-2 bg-white' : ''
+          className={`w-6 h-0.5 transition-all duration-300 ${
+            isMenuOpen ? '-rotate-45 -translate-y-2 bg-white' : isLightPage ? 'bg-ink' : 'bg-white'
           }`}
         />
       </button>

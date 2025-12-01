@@ -54,11 +54,11 @@ const patternSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  patternType: {
-    type: String,
-    enum: ['bitcoin', 'stock', 'fibonacci', 'golden', 'exponential', 'wave', 'chaos', 'fourier', 'other'],
-    default: 'other'
-  },
+ patternType: {
+  type: String,
+  enum: ['bitcoin', 'stock', 'fibonacci', 'golden', 'exponential', 'wave', 'chaos', 'fourier', 'asteroid', 'space', 'other'],
+  default: 'other'
+},
   analysisData: {
     patterns: mongoose.Schema.Types.Mixed,
     visualization_data: mongoose.Schema.Types.Mixed,

@@ -14,6 +14,8 @@ const PATTERN_TYPES = {
   fourier: { label: "Fourier", color: "#5CB88B", icon: "📊" },
   bitcoin: { label: "Bitcoin", color: "#F7931A", icon: "₿" },
   stock: { label: "Stock Market", color: "#5C8BB8", icon: "📈" },
+  asteroid: { label: "Asteroid", color: "#FFD700", icon: "☄️" },
+  space: { label: "Space", color: "#4B0082", icon: "🌌" },
   other: { label: "Other", color: "#7BA591", icon: "✨" },
 };
 
@@ -46,6 +48,8 @@ const getPatternThumbnail = (type) => {
     wave: '〰️',
     chaos: '🌪️',
     fourier: '📊',
+    asteroid: '☄️',
+    space: '🌌',
     other: '✨'
   };
   return thumbnails[type] || '✨';
@@ -71,9 +75,8 @@ export default function Community() {
     { user: "fib_fan", action: "commented on", pattern: "Fibonacci", time: "8 min ago" },
   ]);
 
-  /* 
-      FETCH PATTERNS FROM API
-  */
+   // FETCH PATTERNS FROM API
+  
   useEffect(() => {
     const fetchPatterns = async () => {
       try {
@@ -108,7 +111,7 @@ export default function Community() {
     fetchPatterns();
   }, []);
 
-  /* Mount animation trigger */
+  // Mount animation trigger 
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -173,6 +176,17 @@ export default function Community() {
     requestAnimationFrame(() => {
       window.scrollTo(0, currentScrollY);
     });
+  };
+
+  /* Handle comment added */
+  const handleCommentAdded = (postId, updatedComments) => {
+    setPosts(prevPosts => 
+      prevPosts.map(p => 
+        p.id === postId 
+          ? { ...p, comments: updatedComments || [] }
+          : p
+      )
+    );
   };
 
   /* Filter and sort posts */
@@ -249,7 +263,7 @@ export default function Community() {
         ))}
       </div>
 
-      {/* PAGE TITLE - Responsive padding */}
+      {/* PAGE TITLE/*/}
       <header className="relative z-20 px-4 sm:px-8 md:px-12 pt-16 pb-6">
         <h1 className="font-serif text-3xl sm:text-4xl md:text-[46px] tracking-wide">
           Community
@@ -259,7 +273,7 @@ export default function Community() {
         </p>
       </header>
 
-      {/* SEARCH & FILTER BAR - Responsive */}
+      {/* SEARCH & FILTER BAR/*/}
       <div className="relative z-20 px-4 sm:px-8 md:px-12 mb-8">
         <div 
           className={`
@@ -320,13 +334,13 @@ export default function Community() {
         </div>
       </div>
 
-      {/* MAIN LAYOUT - Responsive stack */}
+      {/* MAIN LAYOUT */}
       <div className="relative z-20 flex flex-col lg:flex-row gap-6 px-4 sm:px-8 md:px-12 max-w-[1400px] mx-auto">
 
         {/* LEFT: POSTS */}
         <div className="flex flex-col gap-4 sm:gap-6 flex-1 lg:flex-[2]">
 
-          {/* CREATE POST BUTTON - Responsive */}
+          {/* CREATE POST BUTTON */}
           <button
             onClick={() => setShowCreatePost(true)}
             className={`
@@ -361,6 +375,7 @@ export default function Community() {
               onExpand={() => handleExpand(post.id)}
               onLike={handleLike}
               onSave={handleSave}
+              onCommentAdded={(updatedComments) => handleCommentAdded(post.id, updatedComments)}
             />
           ))}
 
@@ -379,7 +394,7 @@ export default function Community() {
           )}
         </div>
 
-        {/* RIGHT SIDEBAR - Hidden on mobile, shown on desktop */}
+        {/* RIGHT SIDEBAR */}
         <div className="hidden lg:flex flex-col gap-6 flex-[1] lg:sticky lg:top-8 lg:self-start">
 
           {/* LIVE ACTIVITY FEED */}
@@ -459,9 +474,9 @@ export default function Community() {
 }
 
 /* 
-      POST CARD COMPONENT - Mobile Responsive
+      POST CARD COMPONENT
  */
-function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
+function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave, onCommentAdded }) {
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = React.useRef(null);
 
@@ -512,7 +527,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         onExpand();
       }}
     >
-      {/* Header - Responsive */}
+      {/* Header */}
       <div className="flex items-start justify-between mb-4 gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Avatar */}
@@ -541,7 +556,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
           </div>
         </div>
 
-        {/* Pattern Type Badge - Responsive */}
+        {/* Pattern Type Badge */}
         <span 
           className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1 flex-shrink-0"
           style={{ backgroundColor: patternType.color }}
@@ -551,19 +566,19 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </span>
       </div>
 
-      {/* Thumbnail Preview - Only show if NOT expanded */}
+      {/* Thumbnail Preview */}
       {!isExpanded && (
         <div className="text-5xl sm:text-6xl text-center mb-4 py-4 sm:py-6 bg-white/40 rounded-sm">
           {post.thumbnail}
         </div>
       )}
 
-      {/* Title - Responsive */}
+      {/* Title */}
       <h2 className="font-serif text-xl sm:text-[24px] mb-2">
         {post.title}
       </h2>
 
-      {/* Content - Responsive */}
+      {/* Content */}
       <p className={`opacity-80 leading-relaxed mb-4 text-sm sm:text-base ${!isExpanded && 'line-clamp-2'}`}>
         {post.content}
       </p>
@@ -589,13 +604,14 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         </div>
       )}
 
-      {/* Stats - Responsive */}
+      {/* Stats  */}
+     {/* Stats  */}
       <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm opacity-60 mb-3 sm:mb-4">
         <span className="flex items-center gap-1">
           <EyeIcon /> {post.views}
         </span>
         <span className="flex items-center gap-1">
-          <CommentIcon /> {post.comments.length}
+          <CommentIcon /> {post.comments?.length || 0}
         </span>
         {isExpanded ? (
           <span className="text-xs ml-auto hidden sm:inline">👆 Click to collapse</span>
@@ -604,7 +620,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
         )}
       </div>
 
-      {/* Actions - Responsive buttons */}
+      {/* Actions  */}
       <div className="flex items-center gap-2 pb-3 sm:pb-4 border-b border-ink/10">
         <button
           onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
@@ -644,9 +660,7 @@ function PostCard({ post, delay, isExpanded, onExpand, onLike, onSave }) {
           <CommentSection
             patternId={post.id}
             comments={post.comments}
-            onCommentAdded={() => {
-              window.location.reload();
-            }}
+            onCommentAdded={onCommentAdded}
           /> 
         </div>
       )}
@@ -667,7 +681,7 @@ function TrendingItem({ title, count }) {
 }
 
 /*
-      CREATE POST MODAL - Mobile Responsive
+      CREATE POST MODAL 
 */
 function CreatePostModal({ onClose }) {
   return (

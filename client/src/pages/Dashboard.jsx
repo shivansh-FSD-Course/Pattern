@@ -116,31 +116,41 @@ export default function Dashboard() {
   /* 
       SAVE PROFILE FUNCTION
    */
-  const handleSaveProfile = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await api.put('/auth/profile', {
-        username,
-        bio,
-        avatar: {
-          char: selectedAvatar.char,
-          charId: selectedAvatar.id,
-          color: avatarColor
-        },
-        theme: selectedTheme
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+  /* 
+    SAVE PROFILE FUNCTION
+ */
+const handleSaveProfile = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await api.put('/auth/profile', {
+      username,
+      bio,
+      avatar: {
+        char: selectedAvatar.char,
+        charId: selectedAvatar.id,
+        color: avatarColor
+      },
+      theme: selectedTheme
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      if (res.data.success) {
-        alert('Profile saved successfully! ✨');
-      }
-    } catch (error) {
-      console.error('Failed to save profile:', error);
-      alert(error.response?.data?.message || 'Failed to save changes');
+    if (res.data.success) {
+      // UPDATE LOCALSTORAGE WITH NEW USERNAME
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      currentUser.username = username;
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      
+      alert('Profile saved successfully! ✨');
+      
+      // Optional: Force navbar to re-render by reloading
+      // window.location.reload();
     }
-  };
-
+  } catch (error) {
+    console.error('Failed to save profile:', error);
+    alert(error.response?.data?.message || 'Failed to save changes');
+  }
+};
   /* 
       SAVE AVATAR AND CLOSE MODAL
    */

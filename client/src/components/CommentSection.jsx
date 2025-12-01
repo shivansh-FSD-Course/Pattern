@@ -44,13 +44,21 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       );
 
       console.log('✅ Response received:', response.data);
+      console.log('✅ Full API response:', response.data);
+      console.log('📋 Comments in response:', response.data.comments);
+      console.log('🔍 Response structure:', Object.keys(response.data));
 
       if (response.data.success) {
         console.log('✨ Success! Clearing form and calling onCommentAdded');
         setNewComment('');
         setReplyText('');
         setReplyTo(null);
-        onCommentAdded();
+        
+        // Add the new comment to the existing comments array
+        const newCommentObj = response.data.comment;
+        const updatedComments = [newCommentObj, ...comments];
+        console.log('📤 Sending updated comments:', updatedComments);
+        onCommentAdded(updatedComments);
       } else {
         console.error('❌ Response success was false');
       }
@@ -69,14 +77,21 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
   const handleLikeComment = async (commentId) => {
     try {
       const token = localStorage.getItem('token');
-      await api.post(
+      const response = await api.post(
         `/patterns/${patternId}/comments/${commentId}/like`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      onCommentAdded();
+      
+      // Update the likes count in the comments array
+      const updatedComments = comments.map(comment => 
+        comment._id === commentId 
+          ? { ...comment, likes: response.data.likes || (comment.likes || 0) + 1 }
+          : comment
+      );
+      onCommentAdded(updatedComments);
     } catch (error) {
       console.error('Failed to like comment:', error);
     }
@@ -93,7 +108,10 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      onCommentAdded();
+      
+      // Remove the deleted comment from the comments array
+      const updatedComments = comments.filter(comment => comment._id !== commentId);
+      onCommentAdded(updatedComments);
     } catch (error) {
       console.error('Failed to delete comment:', error);
     }
@@ -256,46 +274,45 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       </h4>
 
       {/* New Comment Form */}
-      {/* New Comment Form */}
-        {!replyTo && (
-          <form 
-            onSubmit={(e) => {
-              console.log('📋 FORM SUBMIT EVENT FIRED');
-              handleSubmit(e);
-            }} 
-            className="mb-4"
+      {!replyTo && (
+        <form 
+          onSubmit={(e) => {
+            console.log('📋 FORM SUBMIT EVENT FIRED');
+            handleSubmit(e);
+          }} 
+          className="mb-4"
+        >
+          <textarea
+            value={newComment}
+            onChange={(e) => {
+              console.log('✍️ New comment text changed:', e.target.value);
+              setNewComment(e.target.value);
+            }}
+            placeholder="Write a comment... (use @username to mention someone)"
+            className="
+              w-full h-20 resize-none px-3 py-2 border border-ink/25
+              outline-none bg-white/70 rounded-sm focus:border-ink text-sm
+            "
+          />
+          <button
+            type="submit"
+            disabled={isSubmitting || !newComment.trim()}
+            className="
+              mt-2 px-4 py-1.5 border border-ink text-sm rounded-sm
+              hover:bg-ink hover:text-paper transition
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
+            onClick={(e) => {
+              console.log('🖱️ BUTTON CLICKED');
+              console.log('Is disabled?', isSubmitting || !newComment.trim());
+              console.log('newComment value:', newComment);
+              console.log('isSubmitting:', isSubmitting);
+            }}
           >
-            <textarea
-              value={newComment}
-              onChange={(e) => {
-                console.log('✍️ New comment text changed:', e.target.value);
-                setNewComment(e.target.value);
-              }}
-              placeholder="Write a comment... (use @username to mention someone)"
-              className="
-                w-full h-20 resize-none px-3 py-2 border border-ink/25
-                outline-none bg-white/70 rounded-sm focus:border-ink text-sm
-              "
-            />
-            <button
-              type="submit"
-              disabled={isSubmitting || !newComment.trim()}
-              className="
-                mt-2 px-4 py-1.5 border border-ink text-sm rounded-sm
-                hover:bg-ink hover:text-paper transition
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-              onClick={(e) => {
-                console.log('🖱️ BUTTON CLICKED');
-                console.log('Is disabled?', isSubmitting || !newComment.trim());
-                console.log('newComment value:', newComment);
-                console.log('isSubmitting:', isSubmitting);
-              }}
-            >
-              {isSubmitting ? 'Posting...' : 'Post Comment'}
-            </button>
-          </form>
-        )}
+            {isSubmitting ? 'Posting...' : 'Post Comment'}
+          </button>
+        </form>
+      )}
 
       {/* Comments List */}
       <div className="space-y-3">
