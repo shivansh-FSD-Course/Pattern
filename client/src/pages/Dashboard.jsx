@@ -402,7 +402,7 @@ const handleSaveProfile = async () => {
         char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
         left: Math.random() * 95,
         top: Math.random() * 95,
-        opacity: 0.015 + Math.random() * 0.035,
+        opacity: 0.1 + Math.random() * 0.035,
         size: 40 + Math.random() * 60,
         rotate: Math.random() * 40 - 20,
         delay: i * 0.12,

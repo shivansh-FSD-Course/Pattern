@@ -57,10 +57,10 @@ export default function Landing() {
         left: Math.random() * 100,
         top: Math.random() * 100,
         size: 46 + Math.random() * 65,
-        opacity: 0.012 + Math.random() * 0.035,
+        opacity: 0.1 + Math.random() * 0.05,
         rotate: Math.random() * 40 - 20,
         delay: i * 0.15,
-        parallaxSpeed: 0.2 + Math.random() * 0.5, // Different speeds for depth
+        parallaxSpeed: 0.2 + Math.random() * 0.5,
       })),
     };
   }, []);
@@ -114,15 +114,12 @@ export default function Landing() {
         </p>
 
         <h1 className="font-serif text-[52px] leading-tight mb-6">
-          Discover <span className="italic text-accent-green">Hidden</span>
-          <br />
-          Patterns
+          Turn Your Data Into <br />
+          <span className="italic text-accent-green">3D Visualizations</span>
         </h1>
 
         <p className="font-serif text-[17px] opacity-75 max-w-xl mb-10">
-          Upload your data and uncover the mathematical poetry hidden within.
-          From Fibonacci sequences to golden ratios, transform numbers into
-          visual beauty.
+          Upload any CSV file—stock prices, sensor data, measurements—and our algorithms instantly detect mathematical patterns like Fibonacci sequences and golden ratios, then transform them into weird & wacky interactive 3D visualizations.
         </p>
 
         {/* CTA BUTTONS */}
@@ -142,6 +139,38 @@ export default function Landing() {
           </button>
         </div>
 
+        {/* HOW IT WORKS SECTION */}
+        <h2 className="font-serif text-4xl text-center mb-4">
+          How It Works
+        </h2>
+
+        <div className="flex justify-center mb-14">
+          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent via-accent-gold to-transparent"></div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-28">
+          <HowItWorksStep
+            number="1"
+            title="Upload Your Data"
+            desc="Upload any CSV dataset—stock prices, temperature readings, sales figures, or measurement data. Any numerical data works!"
+            delay={0}
+          />
+
+          <HowItWorksStep
+            number="2"
+            title="Pattern Detection"
+            desc="Our algorithms automatically scan your data for mathematical patterns: Fibonacci sequences, golden ratios, exponential trends, sine waves, and more."
+            delay={0.15}
+          />
+
+          <HowItWorksStep
+            number="3"
+            title="3D Visualization"
+            desc="Watch your patterns transform into interactive 3D visualizations—spirals, ribbons, and tunnels you can rotate, zoom, and explore."
+            delay={0.3}
+          />
+        </div>
+
         {/* STATS COUNTER SECTION */}
         <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-20">
           <StatCounter end={1247} label="Patterns Found" />
@@ -151,7 +180,7 @@ export default function Landing() {
 
         {/* FEATURE SECTION */}
         <h2 className="font-serif text-4xl text-center mb-4">
-          Mathematical Beauty in Every Dataset
+          Features
         </h2>
 
         <div className="flex justify-center mb-14">
@@ -161,22 +190,22 @@ export default function Landing() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-28">
           <FeatureCard
             icon={<ClockIcon />}
-            title="Pattern Discovery"
-            desc="AI-powered algorithms detect Fibonacci sequences, exponential growth, sine waves, and hidden correlations."
+            title="Instant Analysis"
+            desc="Pattern detection algorithms analyze your data in seconds. No manual configuration needed—just upload and discover."
             delay={0}
           />
 
           <FeatureCard
             icon={<BarsIcon />}
-            title="Visual Transformation"
-            desc="Watch your patterns come alive as 3D visualizations—spirals, fractals, galaxies, and organic motion."
+            title="Interactive 3D"
+            desc="Explore your data in 3D space. Rotate, zoom, and interact with your visualizations to see patterns from every angle."
             delay={0.15}
           />
 
           <FeatureCard
             icon={<InfinityIcon />}
-            title="Share & Explore"
-            desc="Join a community of pattern explorers. Remix findings and contribute knowledge."
+            title="Community Sharing"
+            desc="Share discoveries with others. Browse patterns found by the community and get inspired by their findings."
             delay={0.3}
           />
         </div>
@@ -197,6 +226,57 @@ export default function Landing() {
 
         <div className="h-[120px]" /> {/* Bottom spacer */}
       </div>
+    </div>
+  );
+}
+
+/* 
+      HOW IT WORKS STEP COMPONENT
+ */
+function HowItWorksStep({ number, title, desc, delay }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`
+        p-10 bg-white/60 backdrop-blur-sm rounded-sm
+        border border-ink/15
+        hover:shadow-[0_8px_22px_rgba(0,0,0,0.08)]
+        transition-all duration-700
+        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+      `}
+      style={{
+        transitionDelay: isVisible ? `${delay}s` : '0s',
+      }}
+    >
+      <div className="w-14 h-14 rounded-full bg-accent-green/20 flex items-center justify-center mb-6">
+        <span className="font-serif text-2xl text-accent-green font-bold">{number}</span>
+      </div>
+      <h3 className="font-serif text-xl mb-3">{title}</h3>
+      <p className="text-sm opacity-70 leading-relaxed">{desc}</p>
     </div>
   );
 }
@@ -313,7 +393,9 @@ function FeatureCard({ icon, title, desc, delay }) {
         transitionDelay: isVisible ? `${delay}s` : '0s',
       }}
     >
-      <div className="mb-6">{icon}</div>
+      <div className="mb-6">
+        {icon}
+      </div>
       <h3 className="font-serif text-lg mb-2">{title}</h3>
       <p className="text-sm opacity-70 leading-relaxed">{desc}</p>
     </div>

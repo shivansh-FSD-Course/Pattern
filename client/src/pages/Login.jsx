@@ -58,7 +58,7 @@ export default function Login() {
         left: Math.random() * 95,
         top: Math.random() * 95,
         size: 38 + Math.random() * 55,
-        opacity: 0.015 + Math.random() * 0.035,
+        opacity: 0.1 + Math.random() * 0.035,
         rotate: Math.random() * 40 - 20,
         delay: i * 0.12,
         parallaxSpeed: 0.2 + Math.random() * 0.5,
