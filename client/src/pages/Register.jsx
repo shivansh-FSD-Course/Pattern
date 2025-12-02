@@ -71,7 +71,7 @@ export default function Register() {
         left: Math.random() * 95,
         top: Math.random() * 95,
         size: 38 + Math.random() * 55,
-        opacity: 0.1 + Math.random() * 0.035,
+        opacity: 0.17 + Math.random() * 0.035,
         rotate: Math.random() * 40 - 20,
       })),
     []

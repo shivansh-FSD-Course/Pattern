@@ -17,7 +17,7 @@ export default function IntroGate({ onEnter }) {
       left: Math.random() * 100,
       top: Math.random() * 100,
       size: 30 + Math.random() * 40,
-      opacity: 0.02 + Math.random() * 0.04,
+      opacity: 0.17 + Math.random() * 0.04,
       rotation: Math.random() * 360,
       animationDelay: Math.random() * 5,
       animationDuration: 8 + Math.random() * 12, 
