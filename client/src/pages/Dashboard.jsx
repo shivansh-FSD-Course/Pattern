@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import api from "../api/axios";
 import PatternVisualization from "../components/PatternVisualization";
 import { THEMES, applyTheme, getSelectedTheme } from '../utils/themes';
+import { useNavigate } from 'react-router-dom';
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
 // Avatar options
@@ -64,6 +65,16 @@ const [stats, setStats] = useState({
   totalUploads: 0,
 });
 const [loadingStats, setLoadingStats] = useState(true);
+
+const navigate = useNavigate();
+
+const handleLogout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.setItem('selectedTheme', 'forest');
+  applyTheme('forest');
+  navigate('/');
+};
 
   // Apply theme on mount and when changed
   useEffect(() => {
@@ -362,41 +373,50 @@ const fetchUserStats = async () => {
       PUBLISH HANDLER
   */
   const handlePublish = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      const response = await api.post('/patterns/publish', {
-        title: patternTitle || uploadedFile.name.replace('.csv', ''),
-        caption: caption,
-        datasetName: uploadedFile.name,
-        patternType: analyzedData.dataset_type || 'other',
-        analysisData: {
-          patterns: analyzedData.patterns,
-          visualization_data: analyzedData.visualization_data,
-          insights: analyzedData.insights
-        }
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.success) {
-        alert('Pattern published to community! ✨');
-        
-        await fetchMyPatterns();
-        await fetchUserStats()
-        
-        setShowPublishModal(false);
-        setPatternTitle('');
-        setCaption('');
-        setUploadedFile(null);
-        setAnalyzedData(null);
-        setShowVisualization(false);
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Generate helpful auto-caption if user didn't provide one
+    const datasetType = analyzedData.dataset_type || 'dataset';
+    const patternCount = analyzedData.patterns?.length || 0;
+    
+    const autoCaption = caption.trim() || 
+      `I analyzed ${uploadedFile.name} and found ${patternCount} mathematical pattern${patternCount !== 1 ? 's' : ''}! ` +
+      `This ${datasetType} data shows interesting ${analyzedData.patterns?.[0]?.type || 'numerical'} trends. ` +
+      `Rotate the 3D visualization to explore the pattern structure!`;
+    
+    const response = await api.post('/patterns/publish', {
+      title: patternTitle || uploadedFile.name.replace('.csv', ''),
+      caption: autoCaption,  // Use enhanced caption
+      datasetName: uploadedFile.name,
+      patternType: analyzedData.dataset_type || 'other',
+      analysisData: {
+        patterns: analyzedData.patterns,
+        visualization_data: analyzedData.visualization_data,
+        insights: analyzedData.insights
       }
-    } catch (error) {
-      console.error('Publish failed:', error);
-      alert('Failed to publish pattern');
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (response.data.success) {
+      alert('Pattern published to community! ✨');
+      
+      await fetchMyPatterns();
+      await fetchUserStats();
+      
+      setShowPublishModal(false);
+      setPatternTitle('');
+      setCaption('');
+      setUploadedFile(null);
+      setAnalyzedData(null);
+      setShowVisualization(false);
     }
-  };
+  } catch (error) {
+    console.error('Publish failed:', error);
+    alert('Failed to publish pattern');
+  }
+};
   /* 
       NASA DATA HANDLER
   */

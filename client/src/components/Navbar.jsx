@@ -1,6 +1,7 @@
 // src/components/Navbar.jsx
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { applyTheme } from "../utils/themes"; 
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -32,13 +33,17 @@ export default function Navbar() {
     setIsMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-    setIsMenuOpen(false);
-  };
-
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  
+  // Reset theme to default
+  localStorage.setItem('selectedTheme', 'forest');
+  applyTheme('forest');
+  
+  navigate("/login");
+  setIsMenuOpen(false);
+};
   const goLogin = () => {
     navigate("/login");
     setIsMenuOpen(false);

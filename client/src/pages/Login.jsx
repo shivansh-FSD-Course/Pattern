@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
+import { applyTheme } from "../utils/themes"; 
 
 const GLYPHS = ["φ", "π", "∑", "∞", "ψ", "∂", "√", "≡", "∫", "λ"];
 
@@ -93,37 +94,41 @@ export default function Login() {
   /* 
         LOGIN SUBMIT HANDLER
    */
-  async function handleLogin(e) {
-    e.preventDefault();
-    setErrorMsg("");
-    setLoading(true);
+async function handleLogin(e) {
+  e.preventDefault();
+  setErrorMsg("");
+  setLoading(true);
 
-    try {
-      const res = await api.post("/auth/login", { email, password });
+  try {
+    const res = await api.post("/auth/login", { email, password });
 
-      if (!res.data.success) {
-        throw new Error(res.data.message || "Login failed");
-      }
-
-      localStorage.setItem("token", res.data.token);
-
-      // fetch user object
-      const userRes = await api.get("/auth/me", {
-        headers: { Authorization: `Bearer ${res.data.token}` },
-      });
-
-      localStorage.setItem("user", JSON.stringify(userRes.data.user));
-
-      //  Redirect user to original target
-      navigate(redirectTo, { replace: true });
-    } catch (err) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.message || "Server error. Try again.");
-    } finally {
-      setLoading(false);
+    if (!res.data.success) {
+      throw new Error(res.data.message || "Login failed");
     }
-  }
 
+    localStorage.setItem("token", res.data.token);
+
+    // fetch user object
+    const userRes = await api.get("/auth/me", {
+      headers: { Authorization: `Bearer ${res.data.token}` },
+    });
+
+    localStorage.setItem("user", JSON.stringify(userRes.data.user));
+
+    // Load user's saved theme
+    const userTheme = userRes.data.user.theme || 'forest';
+    localStorage.setItem('selectedTheme', userTheme);
+    applyTheme(userTheme);
+
+    //  Redirect user to original target
+    navigate(redirectTo, { replace: true });
+  } catch (err) {
+    console.error(err);
+    setErrorMsg(err.response?.data?.message || "Server error. Try again.");
+  } finally {
+    setLoading(false);
+  }
+}
   return (
     <div 
       className="relative w-full min-h-screen bg-paper text-ink flex items-center justify-center overflow-hidden"

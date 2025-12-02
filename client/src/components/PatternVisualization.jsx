@@ -168,78 +168,103 @@ export default function PatternVisualization({ data }) {
   }, [data, selectedRenderer]);
 
   return (
-    <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] bg-paper border rounded-sm overflow-hidden">
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-paper/80 backdrop-blur-sm z-10">
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl mb-2 animate-pulse">⚡</div>
-            <p className="text-xs sm:text-sm">Rendering visualization…</p>
+    <div className="space-y-4">
+      {/* CONTEXT HELP PANEL */}
+      <div 
+        className="p-3 sm:p-4 rounded-sm border"
+        style={{
+          backgroundColor: 'var(--theme-primary)' + '10',
+          borderColor: 'var(--theme-primary)' + '30'
+        }}
+      >
+        <h4 
+          className="text-sm sm:text-base font-semibold mb-2 flex items-center gap-2"
+          style={{ color: 'var(--theme-primary)' }}
+        >
+          📖 Reading This Visualization
+        </h4>
+        <ul className="text-xs sm:text-sm space-y-1 opacity-80">
+          <li>• <strong>Each point</strong> represents a data value from your dataset</li>
+          <li>• <strong>The 3D structure</strong> reveals mathematical patterns and relationships</li>
+          <li>• <strong>Height (Y-axis)</strong> shows the magnitude of values</li>
+          <li>• <strong>Click and drag</strong> to rotate • <strong>Scroll</strong> to zoom in/out</li>
+        </ul>
+      </div>
+
+      {/* 3D VISUALIZATION */}
+      <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] bg-paper border rounded-sm overflow-hidden">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-paper/80 backdrop-blur-sm z-10">
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl mb-2 animate-pulse">⚡</div>
+              <p className="text-xs sm:text-sm">Rendering visualization…</p>
+            </div>
           </div>
+        )}
+
+        {/* VISUALIZATION SELECTOR */}
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          {/* Show all renderers for regular data */}
+          {!data.visualization_data?.type?.startsWith('nasa_') && (
+            <>
+              <button
+                onClick={() => setSelectedRenderer("golden_spiral")}
+                className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+                  selectedRenderer === "golden_spiral"
+                    ? "bg-accent-gold/30 border-accent-gold"
+                    : "bg-white/10 border-white/30 hover:bg-white/20"
+                }`}
+                title="Wireframe Spiral"
+              >
+                <span className="hidden sm:inline">🌀 Spiral</span>
+                <span className="sm:hidden">🌀</span>
+              </button>
+              <button
+                onClick={() => setSelectedRenderer("data_ribbon")}
+                className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+                  selectedRenderer === "data_ribbon"
+                    ? "bg-accent-gold/30 border-accent-gold"
+                    : "bg-white/10 border-white/30 hover:bg-white/20"
+                }`}
+                title="Flowing Ribbon"
+              >
+                <span className="hidden sm:inline">〰️ Ribbon</span>
+                <span className="sm:hidden">〰️</span>
+              </button>
+            </>
+          )}
+          
+          {/* Always show Rings - auto-select for NASA data */}
+          <button
+            onClick={() => setSelectedRenderer("candle_spiral")}
+            className={`px-3 py-1.5 text-xs rounded-sm border transition ${
+              selectedRenderer === "candle_spiral"
+                ? "bg-accent-gold/30 border-accent-gold"
+                : "bg-white/10 border-white/30 hover:bg-white/20"
+            }`}
+            title="Ring Tunnel"
+          >
+            <span className="hidden sm:inline">⭕ Rings</span>
+            <span className="sm:hidden">⭕</span>
+          </button>
+          
+          {/* LABELS TOGGLE */}
+          <button
+            onClick={() => {
+              if (mountRef.current?.toggleLabels) {
+                mountRef.current.toggleLabels();
+              }
+            }}
+            className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
+            title="Toggle Data Labels"
+          >
+            <span className="hidden sm:inline">🏷️ Labels</span>
+            <span className="sm:hidden">🏷️</span>
+          </button>
         </div>
-      )}
 
-      {/* VISUALIZATION SELECTOR */}
-<div className="absolute top-4 right-4 z-20 flex gap-2">
-  {/* Show all renderers for regular data */}
-  {!data.visualization_data?.type?.startsWith('nasa_') && (
-    <>
-      <button
-        onClick={() => setSelectedRenderer("golden_spiral")}
-        className={`px-3 py-1.5 text-xs rounded-sm border transition ${
-          selectedRenderer === "golden_spiral"
-            ? "bg-accent-gold/30 border-accent-gold"
-            : "bg-white/10 border-white/30 hover:bg-white/20"
-        }`}
-        title="Wireframe Spiral"
-      >
-        <span className="hidden sm:inline">🌀 Spiral</span>
-        <span className="sm:hidden">🌀</span>
-      </button>
-      <button
-        onClick={() => setSelectedRenderer("data_ribbon")}
-        className={`px-3 py-1.5 text-xs rounded-sm border transition ${
-          selectedRenderer === "data_ribbon"
-            ? "bg-accent-gold/30 border-accent-gold"
-            : "bg-white/10 border-white/30 hover:bg-white/20"
-        }`}
-        title="Flowing Ribbon"
-      >
-        <span className="hidden sm:inline">〰️ Ribbon</span>
-        <span className="sm:hidden">〰️</span>
-      </button>
-    </>
-  )}
-  
-  {/* Always show Rings - auto-select for NASA data */}
-  <button
-    onClick={() => setSelectedRenderer("candle_spiral")}
-    className={`px-3 py-1.5 text-xs rounded-sm border transition ${
-      selectedRenderer === "candle_spiral"
-        ? "bg-accent-gold/30 border-accent-gold"
-        : "bg-white/10 border-white/30 hover:bg-white/20"
-    }`}
-    title="Ring Tunnel"
-  >
-    <span className="hidden sm:inline">⭕ Rings</span>
-    <span className="sm:hidden">⭕</span>
-  </button>
-  
-  {/* LABELS TOGGLE */}
-  <button
-    onClick={() => {
-      if (mountRef.current?.toggleLabels) {
-        mountRef.current.toggleLabels();
-      }
-    }}
-    className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-sm border bg-white/10 border-white/30 hover:bg-white/20 transition"
-    title="Toggle Data Labels"
-  >
-    <span className="hidden sm:inline">🏷️ Labels</span>
-    <span className="sm:hidden">🏷️</span>
-  </button>
-</div>
-
-      <div ref={mountRef} className="w-full h-full" />
+        <div ref={mountRef} className="w-full h-full" />
+      </div>
     </div>
   );
 }

@@ -10,12 +10,24 @@ export default function Landing() {
   const [trails, setTrails] = useState([]);
   const [selectedTheme, setSelectedTheme] = useState(getSelectedTheme());
 
-  useEffect(() => {
-    applyTheme(selectedTheme);
-  }, [selectedTheme]);
+  // Check if user is logged in
+  const token = localStorage.getItem('token');
+  const isLoggedIn = !!token;
 
-  // Check if token exists (user logged in)
-  const token = localStorage.getItem("token");
+  useEffect(() => {
+    if (isLoggedIn) {
+      // User is logged in - apply their theme
+      applyTheme(selectedTheme);
+    } else {
+      // User is logged out - reset to paper colors
+      document.documentElement.style.setProperty('--theme-background', '#F5F3EE');
+      document.documentElement.style.setProperty('--theme-card', 'rgba(255,255,255,0.6)');
+      document.documentElement.style.setProperty('--theme-primary', '#2C2C2C');
+      document.documentElement.style.setProperty('--theme-text', '#2C2C2C');
+      document.documentElement.style.setProperty('--theme-secondary', '#7BA591');
+      document.documentElement.style.setProperty('--theme-accent', '#C9A961');
+    }
+  }, [selectedTheme, isLoggedIn]);
 
   // Scroll handler for parallax
   useEffect(() => {
@@ -63,7 +75,7 @@ export default function Landing() {
         left: Math.random() * 100,
         top: Math.random() * 100,
         size: 46 + Math.random() * 65,
-        opacity: 0.1 + Math.random() * 0.05,
+        opacity: 0.025 + Math.random() * 0.055,
         rotate: Math.random() * 40 - 20,
         delay: i * 0.15,
         parallaxSpeed: 0.2 + Math.random() * 0.5,
@@ -73,7 +85,7 @@ export default function Landing() {
 
   return (
     <div 
-      className="relative w-full min-h-screen bg-paper text-ink overflow-hidden"
+      className="relative w-full min-h-screen text-ink overflow-hidden"
       style={{ backgroundColor: 'var(--theme-background)' }}
       onMouseMove={handleMouseMove}
     >
@@ -81,11 +93,13 @@ export default function Landing() {
       {trails.map(trail => (
         <span
           key={trail.id}
-          className="fixed pointer-events-none text-accent-green/30 text-sm animate-trail-fade z-50"
+          className="fixed pointer-events-none text-sm animate-trail-fade z-50"
           style={{ 
             left: trail.x - 10, 
             top: trail.y - 10,
             fontFamily: 'serif',
+            color: 'var(--theme-primary)',
+            opacity: 0.3
           }}
         >
           {trail.char}
@@ -122,7 +136,7 @@ export default function Landing() {
 
         <h1 className="font-serif text-[52px] leading-tight mb-6">
           Turn Your Data Into <br />
-          <span className="italic text-accent-green">3D Visualizations</span>
+          <span className="italic" style={{ color: 'var(--theme-secondary)' }}>3D Visualizations</span>
         </h1>
 
         <p className="font-serif text-[17px] opacity-75 max-w-xl mb-10">
@@ -152,7 +166,12 @@ export default function Landing() {
         </h2>
 
         <div className="flex justify-center mb-14">
-          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent via-accent-gold to-transparent"></div>
+          <div 
+            className="h-[2px] w-16"
+            style={{ 
+              background: `linear-gradient(to right, transparent, var(--theme-accent), transparent)` 
+            }}
+          ></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-28">
@@ -191,7 +210,12 @@ export default function Landing() {
         </h2>
 
         <div className="flex justify-center mb-14">
-          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent via-accent-gold to-transparent"></div>
+          <div 
+            className="h-[2px] w-16"
+            style={{ 
+              background: `linear-gradient(to right, transparent, var(--theme-accent), transparent)` 
+            }}
+          ></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-28">
@@ -269,20 +293,32 @@ function HowItWorksStep({ number, title, desc, delay }) {
     <div
       ref={cardRef}
       className={`
-        p-10 bg-white/60 backdrop-blur-sm rounded-sm
-        border border-ink/15
+        p-10 backdrop-blur-sm rounded-sm
+        border
         hover:shadow-[0_8px_22px_rgba(0,0,0,0.08)]
         transition-all duration-700
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
       style={{
+        backgroundColor: 'var(--theme-card)',
+        borderColor: 'rgba(44, 44, 44, 0.15)',
         transitionDelay: isVisible ? `${delay}s` : '0s',
       }}
     >
-      <div className="w-14 h-14 rounded-full bg-accent-green/20 flex items-center justify-center mb-6">
-        <span className="font-serif text-2xl text-accent-green font-bold">{number}</span>
+      <div className="flex items-start gap-4 mb-4">
+        <div 
+          className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: '#7BA59130' }}
+        >
+          <span 
+            className="font-serif text-2xl font-bold"
+            style={{ color: '#7BA591' }}
+          >
+            {number}
+          </span>
+        </div>
+        <h3 className="font-serif text-xl mt-3" style={{ color: 'var(--theme-text)' }}>{title}</h3>
       </div>
-      <h3 className="font-serif text-xl mb-3">{title}</h3>
       <p className="text-sm opacity-70 leading-relaxed">{desc}</p>
     </div>
   );
@@ -334,7 +370,10 @@ function StatCounter({ end, label }) {
 
   return (
     <div ref={counterRef} className="text-center">
-      <div className="font-serif text-4xl text-accent-green mb-2">
+      <div 
+        className="font-serif text-4xl mb-2"
+        style={{ color: 'var(--theme-secondary)' }}
+      >
         {count.toLocaleString()}+
       </div>
       <div className="text-sm opacity-60 uppercase tracking-wide">{label}</div>
@@ -389,13 +428,15 @@ function FeatureCard({ icon, title, desc, delay }) {
       onMouseLeave={handleMouseLeave}
       className={`
         feature-card
-        p-10 bg-white/60 backdrop-blur-sm rounded-sm
-        border border-ink/15
+        p-10 backdrop-blur-sm rounded-sm
+        border
         hover:shadow-[0_8px_22px_rgba(0,0,0,0.08)]
         transition-all duration-700
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
       style={{
+        backgroundColor: 'var(--theme-card)',
+        borderColor: 'rgba(44, 44, 44, 0.15)',
         transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) ${isVisible ? 'translateY(0)' : 'translateY(32px)'}`,
         transitionDelay: isVisible ? `${delay}s` : '0s',
       }}
@@ -403,30 +444,29 @@ function FeatureCard({ icon, title, desc, delay }) {
       <div className="mb-6">
         {icon}
       </div>
-      <h3 className="font-serif text-lg mb-2">{title}</h3>
+      <h3 className="font-serif text-lg mb-2" style={{ color: 'var(--theme-text)' }}>{title}</h3>
       <p className="text-sm opacity-70 leading-relaxed">{desc}</p>
     </div>
   );
 }
-
 /* 
       INLINE SVG ICONS
  */
 const ClockIcon = () => (
-  <svg width="38" height="38" stroke="#7BA591" fill="none" strokeWidth="2">
+  <svg width="38" height="38" stroke="var(--theme-secondary)" fill="none" strokeWidth="2">
     <circle cx="19" cy="19" r="16" />
     <path d="M19 8v11l7 4" />
   </svg>
 );
 const BarsIcon = () => (
-  <svg width="38" height="38" stroke="#7BA591" fill="none" strokeWidth="2">
+  <svg width="38" height="38" stroke="var(--theme-secondary)" fill="none" strokeWidth="2">
     <rect x="6" y="20" width="6" height="10" rx="1" />
     <rect x="16" y="14" width="6" height="16" rx="1" />
     <rect x="26" y="8" width="6" height="22" rx="1" />
   </svg>
 );
 const InfinityIcon = () => (
-  <svg width="46" height="38" stroke="#7BA591" fill="none" strokeWidth="2">
+  <svg width="46" height="38" stroke="var(--theme-secondary)" fill="none" strokeWidth="2">
     <path d="M10 19c8-14 16 14 24 0s-16-14-24 0Z" />
   </svg>
 );
