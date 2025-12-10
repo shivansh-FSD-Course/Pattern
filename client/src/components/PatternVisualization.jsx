@@ -108,7 +108,7 @@ export default function PatternVisualization({ data }) {
 
     // ----- Use selected renderer -----
     const renderFunc = RENDERERS[selectedRenderer].renderer;
-    console.log("🎨 Renderer:", selectedRenderer);
+    console.log(" Renderer:", selectedRenderer);
 
     let updateFn = () => {};
     let toggleLabelsFn = null;
@@ -181,7 +181,7 @@ export default function PatternVisualization({ data }) {
           className="text-sm sm:text-base font-semibold mb-2 flex items-center gap-2"
           style={{ color: 'var(--theme-primary)' }}
         >
-          📖 Reading This Visualization
+           Reading This Visualization
         </h4>
         <ul className="text-xs sm:text-sm space-y-1 opacity-80">
           <li>• <strong>Each point</strong> represents a data value from your dataset</li>
