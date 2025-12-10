@@ -138,9 +138,6 @@ const handleThemeChange = async (themeName) => {
   }, []);
 
   /* 
-      SAVE PROFILE FUNCTION
-   */
-  /* 
     SAVE PROFILE FUNCTION
  */
 const handleSaveProfile = async () => {
@@ -167,8 +164,6 @@ const handleSaveProfile = async () => {
       
       alert('Profile saved successfully! ✨');
       
-      // Optional: Force navbar to re-render by reloading
-      // window.location.reload();
     }
   } catch (error) {
     console.error('Failed to save profile:', error);
@@ -926,7 +921,7 @@ const fetchUserStats = async () => {
             </div>
           )}
         </div>
-        {/* NASA DATA BROWSER - NEW SECTION */}
+        {/* NASA DATA BROWSER */}
         <div 
           className={`
             transition-all duration-700 delay-200
