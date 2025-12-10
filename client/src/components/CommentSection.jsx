@@ -11,29 +11,29 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
     e.preventDefault();
     const textToPost = replyTo ? replyText : newComment;
     
-    console.log('🔍 handleSubmit called');
-    console.log('📝 Text to post:', textToPost);
-    console.log('💬 Reply to:', replyTo);
-    console.log('🆔 Pattern ID:', patternId);
-    console.log('📊 Current state:', { newComment, replyText, replyTo });
+    console.log(' handleSubmit called');
+    console.log(' Text to post:', textToPost);
+    console.log(' Reply to:', replyTo);
+    console.log(' Pattern ID:', patternId);
+    console.log(' Current state:', { newComment, replyText, replyTo });
     
     if (!textToPost.trim()) {
-      console.warn('⚠️ Text is empty, not submitting');
+      console.warn(' Text is empty, not submitting');
       return;
     }
 
     setIsSubmitting(true);
-    console.log('🚀 Starting submission...');
+    console.log(' Starting submission...');
 
     try {
       const token = localStorage.getItem('token');
-      console.log('🔑 Token:', token ? 'exists ✓' : 'MISSING ✗');
+      console.log(' Token:', token ? 'exists ✓' : 'MISSING ✗');
       
       const payload = {
         text: textToPost,
         parentCommentId: replyTo
       };
-      console.log('📤 Sending payload:', payload);
+      console.log(' Sending payload:', payload);
       
       const response = await api.post(
         `/patterns/${patternId}/comments`,
@@ -43,13 +43,13 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
         }
       );
 
-      console.log('✅ Response received:', response.data);
-      console.log('✅ Full API response:', response.data);
-      console.log('📋 Comments in response:', response.data.comments);
-      console.log('🔍 Response structure:', Object.keys(response.data));
+      console.log(' Response received:', response.data);
+      console.log(' Full API response:', response.data);
+      console.log(' Comments in response:', response.data.comments);
+      console.log(' Response structure:', Object.keys(response.data));
 
       if (response.data.success) {
-        console.log('✨ Success! Clearing form and calling onCommentAdded');
+        console.log(' Success! Clearing form and calling onCommentAdded');
         setNewComment('');
         setReplyText('');
         setReplyTo(null);
@@ -57,20 +57,20 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
         // Add the new comment to the existing comments array
         const newCommentObj = response.data.comment;
         const updatedComments = [newCommentObj, ...comments];
-        console.log('📤 Sending updated comments:', updatedComments);
+        console.log(' Sending updated comments:', updatedComments);
         onCommentAdded(updatedComments);
       } else {
-        console.error('❌ Response success was false');
+        console.error(' Response success was false');
       }
     } catch (error) {
-      console.error('❌ Failed to post comment:', error);
-      console.error('📛 Error message:', error.message);
-      console.error('📛 Error response:', error.response?.data);
-      console.error('📛 Error status:', error.response?.status);
+      console.error(' Failed to post comment:', error);
+      console.error(' Error message:', error.message);
+      console.error(' Error response:', error.response?.data);
+      console.error(' Error status:', error.response?.status);
       alert(error.response?.data?.message || 'Failed to post comment');
     } finally {
       setIsSubmitting(false);
-      console.log('🏁 Submission complete, isSubmitting set to false');
+      console.log(' Submission complete, isSubmitting set to false');
     }
   };
 
@@ -119,7 +119,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
 
   // Organize comments into nested structure
   const organizeComments = (comments) => {
-    console.log('📋 Organizing comments:', comments);
+    console.log(' Organizing comments:', comments);
     const commentMap = {};
     const rootComments = [];
 
@@ -137,7 +137,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       }
     });
 
-    console.log('📊 Root comments:', rootComments.length);
+    console.log(' Root comments:', rootComments.length);
     return rootComments;
   };
 
@@ -230,7 +230,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
                   <button
                     type="button"
                     onClick={() => {
-                      console.log('❌ Cancel reply clicked');
+                      console.log(' Cancel reply clicked');
                       setReplyTo(null);
                       setReplyText('');
                     }}
@@ -259,7 +259,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
 
   const organizedComments = organizeComments(comments);
 
-  console.log('🎨 Rendering CommentSection', {
+  console.log(' Rendering CommentSection', {
     patternId,
     totalComments: comments.length,
     organizedComments: organizedComments.length,
@@ -277,7 +277,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
       {!replyTo && (
         <form 
           onSubmit={(e) => {
-            console.log('📋 FORM SUBMIT EVENT FIRED');
+            console.log(' FORM SUBMIT EVENT FIRED');
             handleSubmit(e);
           }} 
           className="mb-4"
@@ -285,7 +285,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
           <textarea
             value={newComment}
             onChange={(e) => {
-              console.log('✍️ New comment text changed:', e.target.value);
+              console.log(' New comment text changed:', e.target.value);
               setNewComment(e.target.value);
             }}
             placeholder="Write a comment... (use @username to mention someone)"
@@ -303,7 +303,7 @@ export default function CommentSection({ patternId, comments, onCommentAdded }) 
               disabled:opacity-50 disabled:cursor-not-allowed
             "
             onClick={(e) => {
-              console.log('🖱️ BUTTON CLICKED');
+              console.log(' BUTTON CLICKED');
               console.log('Is disabled?', isSubmitting || !newComment.trim());
               console.log('newComment value:', newComment);
               console.log('isSubmitting:', isSubmitting);
