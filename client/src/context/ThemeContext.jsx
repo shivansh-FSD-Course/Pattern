@@ -37,13 +37,13 @@ export const ThemeProvider = ({ children }) => {
     document.documentElement.style.setProperty('--theme-primary', theme.primary);
     document.documentElement.style.setProperty('--theme-secondary', theme.secondary);
     
-    console.log('🎨 Theme applied:', themeId, theme.primary);  // Debug log
+    console.log(' Theme applied:', themeId, theme.primary);  // Debug log
   };
 
   const changeTheme = (themeId) => {
     if (!THEMES[themeId]) return;
     
-    console.log('🎨 Changing theme to:', themeId);  // Debug log
+    console.log(' Changing theme to:', themeId);  // Debug log
     setCurrentTheme(themeId);
     applyTheme(themeId);
     localStorage.setItem('theme', themeId);
