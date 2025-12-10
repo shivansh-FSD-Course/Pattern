@@ -27,7 +27,7 @@ def analyze_bitcoin_patterns(csv_path):
             'statistics': calculate_statistics(df)
         }
 
-        # Visualization — fixed spiral output
+        # Visualization 
         viz_data = generate_visualization_data(df, patterns)
 
         # Insights
