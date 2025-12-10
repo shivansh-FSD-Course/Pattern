@@ -142,7 +142,7 @@ export function renderGoldenSpiral({ scene, vizData, THREE, disposables }) {
     light.position.copy(marker.position);
     group.add(light);
 
-    // === CLEAN MINIMAL LABEL ===
+  
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     canvas.width = 200;
